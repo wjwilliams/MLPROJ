@@ -1,0 +1,477 @@
+---
+output:
+  md_document:
+    variant: markdown_github
+---
+
+# Purpose
+
+Purpose of this work folder.
+
+Ideally store a minimum working example data set in data folder.
+
+Add binary files in bin, and closed R functions in code. Human Readable settings files (e.g. csv) should be placed in settings/
+
+
+```{r}
+
+rm(list = ls()) # Clean your environment:
+gc() # garbage collection - It can be useful to call gc after a large object has been removed, as this may prompt R to return memory to the operating system.
+library(tidyverse)
+library(rsample)
+list.files('code/', full.names = T, recursive = T) %>% .[grepl('.R', .)] %>% as.list() %>% walk(~source(.))
+```
+
+```{r IMPORTDATA&cleaning}
+master_df <- read.csv("data/games.csv")
+
+#drop unuseful collumns
+master_df <- subset(master_df, select = c(-white_id, -black_id, -id, -created_at, -last_move_at))
+
+#Drop any games with less than 11 moves so we can use the first 5 moves
+master_df <- master_df %>%
+  filter(str_count(moves, "\\S+") >= 11)
+
+#Create a difference variables of the difference in ratings with respect to white such that if white has an elo of 400 and black 500 the difference will be -100
+master_df$ratingdiff <- master_df$white_rating - master_df$black_rating
+
+#Extracting the first five moves for White and black
+##This removes everything after the first space which leaves the first move in chess notation eg e4 represents the first move for white movinf the pawn to the e4 square
+master_df <- master_df %>%
+  separate(moves, into = c("whitemove1", "blackmove1", "whitemove2", "blackmove2", "whitemove3","blackmove3", "whitemove4","blackmove4", "whitemove5", "blackmove5"), sep = " ", extra = "drop", fill = "right") 
+  
+```
+
+```{r Descriptives}
+#First lets just see the ratio of game outcomes by time controls, rating, rating difference, and type of win (timeout, checkmate and resignation)
+library(dplyr)
+whitemovepop <- master_df %>%
+  count(whitemove1) %>%
+  top_n(10) %>%
+  arrange(desc(n))
+
+blackmovepop <- master_df %>%
+  count(blackmove1) %>%
+  top_n(10) %>%
+  arrange(desc(n))
+
+# Combine the most common moves for white and black
+movepop <- bind_rows(
+ mutate(whitemovepop, side = "White", move = whitemove1),
+  mutate(blackmovepop, side = "Black", move = blackmove1)
+)
+
+# Plot the bar plot
+ggplot(movepop, aes(x = fct_inorder(move), y = n, fill = side)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Move 1", y = "Frequency", title = "10 Most Common Move 1 for White and Black") +
+  scale_fill_manual(values = c("White" = "steelblue", "Black" = "darkorange")) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+#Now to see the proportions of wins relative to the most popular openings
+outcome_proportions <- master_df %>%
+  group_by(whitemove1) %>%
+  summarize(
+    white_wins = sum(winner == "white"),
+    black_wins = sum(winner == "black"),
+    draws = sum(winner == "draw"),
+    total_games = n()
+  ) %>%
+  mutate(
+    white_win_prop = white_wins / total_games,
+    black_win_prop = black_wins / total_games,
+    draw_prop = draws / total_games
+  )
+
+
+outcome_proportions
+
+filtered_proportions <- outcome_proportions %>%
+  filter(whitemove1 %in% c("e4", "d4", "Nf3", "c4", "e3"))
+
+filtered_proportions_long <- tidyr::pivot_longer(filtered_proportions,
+                                                 cols = c(white_win_prop, black_win_prop, draw_prop),
+                                                 names_to = "outcome",
+                                                 values_to = "proportion")
+
+
+ggplot(filtered_proportions_long, aes(x = whitemove1, y = proportion, fill = outcome)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "First Move", y = "Win rate", title = "Win Percentage by Colour for First Moves") +
+  scale_fill_manual(values = c("white_win_prop" = "steelblue", "black_win_prop" = "darkorange", "draw_prop" = "gray"),
+                    labels = c("Black Wins", "Draws", "White Wins")) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_x_discrete(limits = c("e4", "d4", "Nf3", "c4", "e3")) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+```{r factorengineering}
+library(dplyr)
+
+
+master_df$whitemove1 <- as.factor(master_df$whitemove1)
+master_df$whitemove2 <- as.factor(master_df$whitemove2)
+master_df$whitemove3 <- as.factor(master_df$whitemove3)
+master_df$whitemove4 <- as.factor(master_df$whitemove4)
+master_df$whitemove5 <- as.factor(master_df$whitemove5)
+
+master_df$blackmove1 <- as.factor(master_df$blackmove1)
+master_df$blackmove2 <- as.factor(master_df$blackmove2)
+master_df$blackmove3 <- as.factor(master_df$blackmove3)
+master_df$blackmove4 <- as.factor(master_df$blackmove4)
+master_df$blackmove5 <- as.factor(master_df$blackmove5)
+
+master_df$winner <- as.factor(master_df$winner)
+master_df$opening_eco <- as.factor(master_df$opening_eco)
+master_df$victory_status <- as.factor(master_df$victory_status)
+master_df$rated <- as.factor(master_df$rated)
+master_df$increment_code <- as.factor(master_df$increment_code)
+```
+
+```{r First attempt}
+ library(caret)
+set.seed(555)
+split_1  <- initial_split(master_df, prop = 0.7)  # Split the dataset 
+train_2  <- training(split_1)  # Training set
+test_2   <- testing(split_1)  # Test set
+
+cv <- trainControl(
+  method = "repeatedcv", 
+  number = 10, 
+  repeats = 5
+)
+
+hyper_grid <- expand.grid(k = seq(2, 25, by = 1))
+
+knn_fit <- train(
+  winner~ rated + turns + victory_status + white_rating + black_rating + opening_eco + opening_ply, 
+  data = master_df, 
+  method = "knn", 
+  trControl = cv, 
+  tuneGrid = hyper_grid
+)
+
+knn_fit
+```
+
+```{r}
+library(xgboost)
+library(caret)
+library(rsample)
+set.seed(555)
+
+split_1 <- initial_split(master_df, prop = 0.7)  # Split the dataset 
+train_2 <- training(split_1)  # Training set
+test_2 <- testing(split_1)  # Test set
+
+
+
+set.seed(555)
+
+# Convert categorical variables to factors
+factor_cols <- c("rated", "victory_status", "opening_eco")
+train_2[factor_cols] <- lapply(train_2[factor_cols], as.factor)
+test_2[factor_cols] <- lapply(test_2[factor_cols], as.factor)
+
+# Perform one-hot encoding
+train_encoded <- model.matrix(~.-1, data = train_2[, c("rated", "victory_status", "opening_eco")])
+test_encoded <- model.matrix(~.-1, data = test_2[, c("rated", "victory_status", "opening_eco")])
+
+# Combine predictors into a single matrix
+X_train <- cbind(train_2[, c("turns", "white_rating", "black_rating", "opening_ply")], train_encoded)
+X_test <- cbind(test_2[, c("turns", "white_rating", "black_rating", "opening_ply")], test_encoded)
+
+# Convert labels to factor
+train_labels <- as.factor(train_2$winner)
+test_labels <- as.factor(test_2$winner)
+
+# Create the DMatrix for XGBoost
+dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = as.integer(train_labels) - 1)  # Subtract 1 to make labels start from 0
+dtest <- xgb.DMatrix(data = as.matrix(X_test))
+
+# Set the parameters for the XGBoost model
+params <- list(
+  objective = "multi:softmax",  # Multiclass classification objective
+  eval_metric = "mlogloss",  # Evaluation metric
+  num_class = 3,  # Number of classes (black, white, draw)
+  nthread = 1,  # Number of threads
+  seed = 555  # Random seed
+)
+
+# Train the XGBoost model
+xgb_model <- xgboost(
+  data = dtrain,
+  params = params,
+  nrounds = 100,  # Number of boosting rounds (you can adjust this parameter)
+  early_stopping_rounds = 10,  # Early stopping rounds
+  verbose = 0  # Verbosity level
+)
+
+# Predict using the trained model
+predictions <- predict(xgb_model, dtest)
+
+# Convert class predictions to labels
+labels <- levels(train_labels)
+class_predictions <- labels[as.integer(predictions) + 1]  # Add 1 to revert back to original labels
+
+# Assess the model performance
+# Assuming you have the actual test labels in test_2$winner
+accuracy <- sum(class_predictions == test_labels) / length(test_labels)
+
+
+```
+
+```{r Startover}
+library(recipes)
+library(xgboost)
+set.seed(555)
+split_1  <- initial_split(master_df, prop = 0.7)  # Split the dataset 
+train_2  <- training(split_1)  # Training set
+test_2   <- testing(split_1)  # Test set
+
+boost_prep <- recipe(data = train_2, winner ~ rated + white_rating + black_rating + ratingdiff + opening_eco + opening_ply+ whitemove1 + whitemove2+ whitemove3+ whitemove4+ whitemove5 + blackmove1 + blackmove2 + blackmove3 + blackmove4 + blackmove5 ) %>% 
+    prep(training = train_2, retain = TRUE) %>%
+  juice()
+
+X <- as.matrix(boost_prep[setdiff(names(boost_prep), "winner")])
+Y <- boost_prep$winner
+    
+set.seed(555)
+chessboost <- xgboost(
+  data = X,
+  label = Y,
+  nrounds = 6000,
+  objective = "multi:softmax",
+  early_stopping_rounds = 50, 
+  nfold = 10,
+  params = list(
+    eta = 0.1,
+    max_depth = 3,
+    min_child_weight = 3,
+    subsample = 0.8,
+    num_class = 2,
+    colsample_bytree = 1.0),
+  verbose = 0
+)  
+
+# minimum test CV RMSE
+min(chessboost$evaluation_log$test_rmse_mean)
+
+```
+
+```{r XGBOOST}
+
+library(recipes)
+library(xgboost)
+set.seed(555)
+split_1  <- initial_split(master_df, prop = 0.7)  # Split the dataset 
+train_2  <- training(split_1)  # Training set
+test_2   <- testing(split_1)  # Test set
+factor_cols <- c("rated", "victory_status", "opening_eco","whitemove1", "whitemove2", "whitemove3", "whitemove4", "whitemove5", "blackmove1", "blackmove2", "blackmove3", "blackmove4", "blackmove5")
+train_2[factor_cols] <- lapply(train_2[factor_cols], as.factor)
+test_2[factor_cols] <- lapply(test_2[factor_cols], as.factor)
+
+# Perform one-hot encoding
+train_encoded <- model.matrix(~.-1, data = train_2[, c("rated", "victory_status", "opening_eco","whitemove1", "whitemove2", "whitemove3", "whitemove4", "whitemove5", "blackmove1", "blackmove2", "blackmove3", "blackmove4", "blackmove5")])
+test_encoded <- model.matrix(~.-1, data = test_2[, c("rated", "victory_status", "opening_eco","whitemove1", "whitemove2", "whitemove3", "whitemove4", "whitemove5", "blackmove1", "blackmove2", "blackmove3", "blackmove4", "blackmove5")])
+
+# Combine predictors into a single matrix
+X_train <- cbind(train_2[, c("white_rating", "black_rating", "opening_ply", "ratingdiff" )], train_encoded)
+X_test <- cbind(test_2[, c( "white_rating", "black_rating", "opening_ply", "ratingdiff")], test_encoded)
+
+# Convert labels to factor
+train_labels <- as.factor(train_2$winner)
+test_labels <- as.factor(test_2$winner)
+
+# Create the DMatrix for XGBoost
+dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = as.integer(train_labels) - 1)  # Subtract 1 to make labels start from 0
+dtest <- xgb.DMatrix(data = as.matrix(X_test))
+
+# Set the parameters for the XGBoost model
+params <- list(
+  objective = "multi:softmax",  # Multiclass classification objective
+  eval_metric = "mlogloss",  # Evaluation metric
+  num_class = 3,  # Number of classes (black, white, draw)
+  nthread = 1,  # Number of threads
+  seed = 555  # Random seed
+)
+
+# Train the XGBoost model
+xgb_model <- xgboost(
+  data = dtrain,
+  params = params,
+  nrounds = 100,  # Number of boosting rounds (you can adjust this parameter)
+  early_stopping_rounds = 10,  # Early stopping rounds
+  verbose = 1  # Verbosity level
+)
+
+# Predict using the trained model
+predictions <- predict(xgb_model, dtest)
+
+# Convert class predictions to labels
+labels <- levels(train_labels)
+class_predictions <- labels[as.integer(predictions) + 1]  # Add 1 to revert back to original labels
+
+# Assess the model performance
+# Assuming you have the actual test labels in test_2$winner
+accuracy <- sum(class_predictions == test_labels) / length(test_labels)
+```
+
+```{r}
+library(recipes)
+library(xgboost)
+set.seed(555)
+split_1 <- initial_split(master_df, prop = 0.7)  # Split the dataset 
+train_2 <- training(split_1)  # Training set
+test_2 <- testing(split_1)  # Test set
+factor_cols <- c("rated", "victory_status", "opening_eco", "whitemove1", "whitemove2", "whitemove3", "whitemove4", "whitemove5", "blackmove1", "blackmove2", "blackmove3", "blackmove4", "blackmove5")
+train_2[factor_cols] <- lapply(train_2[factor_cols], as.character)
+test_2[factor_cols] <- lapply(test_2[factor_cols], as.character)
+
+# Assign unique numerical identifiers to categorical variables
+for (col in factor_cols) {
+  unique_vals <- unique(c(train_2[[col]], test_2[[col]]))
+  train_2[[col]] <- as.integer(factor(train_2[[col]], levels = unique_vals))
+  test_2[[col]] <- as.integer(factor(test_2[[col]], levels = unique_vals))
+}
+
+# Combine predictors into a single matrix
+X_train <- cbind(train_2[, c("white_rating", "black_rating", "opening_ply", "ratingdiff")], train_2[factor_cols])
+X_test <- cbind(test_2[, c("white_rating", "black_rating", "opening_ply", "ratingdiff")], test_2[factor_cols])
+
+# Convert labels to factor
+train_labels <- as.factor(train_2$winner)
+test_labels <- as.factor(test_2$winner)
+
+# Set the parameters for the XGBoost model
+params <- list(
+  objective = "multi:softmax",  # Multiclass classification objective
+  eval_metric = "mlogloss",  # Evaluation metric
+  num_class = 3,  # Number of classes (black, white, draw)
+  nthread = 1,  # Number of threads
+  seed = 555  # Random seed
+)
+
+# Create the DMatrix for XGBoost
+dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = as.integer(train_labels) - 1)  # Subtract 1 to make labels start from 0
+dtest <- xgb.DMatrix(data = as.matrix(X_test), label = as.integer(test_labels) - 1)
+
+# Train the XGBoost model
+xgb_model <- xgboost(
+  data = dtrain,
+  params = params,
+  nrounds = 1000,  # Number of boosting rounds (you can adjust this parameter)
+  early_stopping_rounds = 10,  # Early stopping rounds
+  verbose = 1  # Verbosity level
+)
+
+# Predict using the trained model
+predictions <- predict(xgb_model, dtest)
+
+# Convert class predictions to labels
+labels <- levels(test_labels)
+class_predictions <- labels[as.integer(predictions) + 1]  # Add 1 to revert back to original labels
+
+# Assess the model performance
+accuracy <- sum(class_predictions == test_labels) / length(test_labels)
+
+
+```
+
+```{r cv}
+set.seed(123)
+
+# Create the DMatrix for XGBoost
+dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = as.integer(train_labels) - 1)  # Subtract 1 to make labels start from 0
+
+# Set the parameters for the XGBoost model
+params <- list(
+  objective = "multi:softmax",  # Multiclass classification objective
+  eval_metric = "mlogloss",  # Evaluation metric
+  num_class = 3,  # Number of classes (black, white, draw)
+  eta = 0.0.5,
+  max_depth = 3,
+  min_child_weight = 3,
+  subsample = 0.8,
+  colsample_bytree = 1.0
+)
+
+# Perform cross-validation
+cv_result <- xgb.cv(
+  data = dtrain,
+  params = params,
+  nrounds = 6000,
+  early_stopping_rounds = 50,
+  nfold = 10,
+  verbose = 0
+)
+
+# Get the minimum test CV logloss
+min_logloss <- min(cv_result$evaluation_log$test_mlogloss_mean)
+
+# Print the minimum test CV logloss
+print(min_logloss)
+
+```
+
+```{r gridsearch}
+hyper_grid <- expand.grid(
+  eta = 0.01,
+  max_depth = 3,
+  min_child_weight = 3,
+  subsample = 0.5,
+  colsample_bytree = 0.5,
+  gamma = c(0, 1, 10, 100, 1000),
+  lambda = c(0, 1e-2, 0.1, 1, 100, 1000, 10000),
+  alpha = c(0, 1e-2, 0.1, 1, 100, 1000, 10000),
+  rmse = 0,
+  trees = 0
+)
+
+# Grid search
+for (i in seq_len(nrow(hyper_grid))) {
+  set.seed(123)
+  dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = as.integer(train_labels) - 1)
+  params <- list(
+    objective = "multi:softmax",
+    eval_metric = "mlogloss",
+    num_class = 3,
+    eta = hyper_grid$eta[i],
+    max_depth = hyper_grid$max_depth[i],
+    min_child_weight = hyper_grid$min_child_weight[i],
+    subsample = hyper_grid$subsample[i],
+    colsample_bytree = hyper_grid$colsample_bytree[i],
+    gamma = hyper_grid$gamma[i],
+    lambda = hyper_grid$lambda[i],
+    alpha = hyper_grid$alpha[i]
+  )
+  
+  cv_result <- xgb.cv(
+    data = dtrain,
+    params = params,
+    nrounds = 4000,
+    early_stopping_rounds = 50,
+    nfold = 10,
+    verbose = 0
+  )
+  
+  hyper_grid$rmse[i] <- min(cv_result$evaluation_log$test_mlogloss_mean)
+  hyper_grid$trees[i] <- cv_result$best_iteration
+}
+
+# Filter and sort the results
+filtered_results <- hyper_grid %>%
+  filter(rmse > 0) %>%
+  arrange(rmse)
+
+# Print the filtered results
+glimpse(filtered_results)
+
+```
+
+```{r finalfit}
+
+```
+
