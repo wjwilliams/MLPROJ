@@ -1,0 +1,454 @@
+---
+# IMPORTANT: Change settings here, but DO NOT change the spacing.
+# Remove comments and add values where applicable.
+# The descriptions below should be self-explanatory
+
+title: "Data Science Methods for Economics and Finance 871 Final Project: Predicting Chess Outcomes"
+#subtitle: "This will appear as Right Header"
+
+documentclass: "elsarticle"
+
+# --------- Thesis title (Optional - set to FALSE by default).
+# You can move the details below around as you please.
+Thesis_FP: FALSE
+# Entry1: "An unbelievable study with a title spanning multiple lines."
+# Entry2: "\\textbf{Some Guy}" # textbf for bold
+# Entry3: "A thesis submitted toward the degree of Doctor of Philosophy"
+# Uni_Logo: Tex/Logo.png # Place a logo in the indicated location (from your root, e.g. defaults to ~/Tex/Logo.png) and uncomment this line. Leave uncommented for no image
+# Logo_width: 0.3 # If using a logo - use this to set width (size) of image
+# Entry4: "Under the supervision of: \\vfill Prof. Joe Smith and Dr. Frank Smith"
+# Entry5: "Stellenbosch University"
+# Entry6: April 2020
+# Entry7:
+# Entry8:
+
+# --------- Front Page
+# Comment: ----- Follow this pattern for up to 5 authors
+AddTitle: TRUE # Use FALSE when submitting to peer reviewed platform. This will remove author names.
+Author1: "Wesley Williams^[You can find my code on my Github page: https://github.com/wjwilliams/MLPROJ]"  # First Author - note the thanks message displayed as an italic footnote of first page.
+Ref1: "Stellenbosch University, South Africa" # First Author's Affiliation
+Email1: "21691126\\@sun.ac.za" # First Author's Email address
+
+# Author2: "John Smith"
+# Ref2: "Some other Institution, Cape Town, South Africa"
+# Email2: "John\\@gmail.com"
+# CommonAffiliation_12: TRUE # If Author 1 and 2 have a common affiliation. Works with _13, _23, etc.
+# 
+# Author3: "John Doe"
+# Email3: "Joe\\@gmail.com"
+# 
+# CorrespAuthor_1: TRUE  # If corresponding author is author 3, e.g., use CorrespAuthor_3: TRUE
+# 
+# # Comment out below to remove both. JEL Codes only given if keywords also given.
+# keywords: "Multivariate GARCH \\sep Kalman Filter \\sep Copula" # Use \\sep to separate
+# JELCodes: "L250 \\sep L100"
+
+# ----- Manage headers and footers:
+#BottomLFooter: $Title$
+#BottomCFooter:
+#TopLHeader: \leftmark # Adds section name at topleft. Remove comment to add it.
+BottomRFooter: "\\footnotesize Page \\thepage" # Add a '#' before this line to remove footer.
+addtoprule: TRUE
+addfootrule: TRUE               # Use if footers added. Add '#' to remove line.
+
+# --------- page margins:
+margin: 2.3 # Sides
+bottom: 2 # bottom
+top: 2.5 # Top
+HardSet_layout: TRUE # Hard-set the spacing of words in your document. This will stop LaTeX squashing text to fit on pages, e.g.
+# This is done by hard-setting the spacing dimensions. Set to FALSE if you want LaTeX to optimize this for your paper.
+
+# --------- Line numbers
+linenumbers: FALSE # Used when submitting to journal
+
+# ---------- References settings:
+# You can download cls format here: https://www.zotero.org/ - simply search for your institution. You can also edit and save cls formats here: https://editor.citationstyles.org/about/
+# Hit download, store it in Tex/ folder, and change reference below - easy.
+bibliography: Tex/ref.bib       # Do not edit: Keep this naming convention and location.
+csl: Tex/harvard-stellenbosch-university.csl # referencing format used.
+# By default, the bibliography only displays the cited references. If you want to change this, you can comment out one of the following:
+#nocite: '@*' # Add all items in bibliography, whether cited or not
+# nocite: |  # add specific references that aren't cited
+#  @grinold2000
+#  @Someoneelse2010
+
+# ---------- General:
+RemovePreprintSubmittedTo: TRUE  # Removes the 'preprint submitted to...' at bottom of titlepage
+Journal: "Journal of Finance"   # Journal that the paper will be submitting to, if RemovePreprintSubmittedTo is set to TRUE.
+toc: FALSE                       # Add a table of contents
+numbersections: TRUE             # Should sections (and thus figures and tables) be numbered?
+fontsize: 11pt                  # Set fontsize
+linestretch: 1.2                # Set distance between lines.
+link-citations: TRUE            # This creates dynamic links to the papers in reference list.
+
+### Adding additional latex packages:
+# header-includes:
+#    - \usepackage{colortbl} # Add additional packages here.
+
+output:
+  pdf_document:
+    keep_tex: TRUE
+    template: Tex/TexDefault.txt
+    fig_width: 3.5 # Adjust default figure sizes. This can also be done in the chunks of the text.
+    fig_height: 3.5
+abstract: |
+  Abstract to be written here. The abstract should not be too long and should provide the reader with a good understanding what you are writing about. Academic papers are not like novels where you keep the reader in suspense. To be effective in getting others to read your paper, be as open and concise about your findings here as possible. Ideally, upon reading your abstract, the reader should feel he / she must read your paper in entirety.
+---
+
+<!-- First: Set your default preferences for chunk options: -->
+
+<!-- If you want a chunk's code to be printed, set echo = TRUE. message = FALSE stops R printing ugly package loading details in your final paper too. I also suggest setting warning = FALSE and checking for warnings in R, else you might find ugly warnings in your paper. -->
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.width = 6, fig.height = 5, fig.pos="H", fig.pos = 'H')
+# Note: Include = FALSE implies the code is executed, but not printed in your pdf.
+# warning and message = FALSE implies ugly messages and warnings are removed from your pdf.
+# These should be picked up when you execute the command chunks (code sections below) in your rmd, not printed in your paper!
+
+# Lets load in example data, and see how this can be stored and later called from your 'data' folder.
+if(!require("tidyverse")) install.packages("tidyverse")
+library(tidyverse)
+library(caret)
+library(xtable)
+library(rsample)
+library(xgboost)
+
+```
+
+
+<!-- ############################## -->
+<!-- # Start Writing here: -->
+<!-- ############################## -->
+```{r IMPORTDATA&cleaning}
+master_df <- read.csv("data/games.csv")
+
+#drop unuseful collumns
+master_df <- subset(master_df, select = c(-white_id, -black_id, -id, -created_at, -last_move_at))
+
+#Drop any games with less than 11 moves so we can use the first 5 moves
+master_df <- master_df %>%
+  filter(str_count(moves, "\\S+") >= 11)
+
+#Create a difference variables of the difference in ratings with respect to white such that if white has an elo of 400 and black 500 the difference will be -100
+master_df$ratingdiff <- master_df$white_rating - master_df$black_rating
+
+#Extracting the first five moves for White and black
+##This removes everything after the first space which leaves the first move in chess notation eg e4 represents the first move for white movinf the pawn to the e4 square
+master_df <- master_df %>%
+  separate(moves, into = c("whitemove1", "blackmove1", "whitemove2", "blackmove2", "whitemove3","blackmove3", "whitemove4","blackmove4", "whitemove5", "blackmove5"), sep = " ", extra = "drop", fill = "right") 
+  
+```
+# Introduction \label{Introduction}
+
+
+
+
+# Exploratory Data Investigation
+
+```{r commonmoves}
+#First lets just see the ratio of game outcomes by time controls, rating, rating difference, and type of win (timeout, checkmate and resignation)
+library(dplyr)
+whitemovepop <- master_df %>%
+  count(whitemove1) %>%
+  top_n(10) %>%
+  arrange(desc(n))
+
+blackmovepop <- master_df %>%
+  count(blackmove1) %>%
+  top_n(10) %>%
+  arrange(desc(n))
+
+# Combine the most common moves for white and black
+movepop <- bind_rows(
+ mutate(whitemovepop, side = "White", move = whitemove1),
+  mutate(blackmovepop, side = "Black", move = blackmove1)
+)
+
+# Plot the bar plot
+
+plot1 <- ggplot(movepop, aes(x = fct_inorder(move), y = n, fill = side)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Move 1", y = "Frequency", title = "10 Most Common Move 1 for White and Black") +
+  scale_fill_manual(values = c("White" = "gray", "Black" = "black")) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+plot1
+```
+
+```{r winsbyfirstmove}
+#Now to see the proportions of wins relative to the most popular openings
+outcome_proportions <- master_df %>%
+  group_by(whitemove1) %>%
+  summarize(
+    white_wins = sum(winner == "white"),
+    black_wins = sum(winner == "black"),
+    draws = sum(winner == "draw"),
+    total_games = n()
+  ) %>%
+  mutate(
+    white_win_prop = white_wins / total_games,
+    black_win_prop = black_wins / total_games,
+    draw_prop = draws / total_games
+  )
+
+
+filtered_proportions <- outcome_proportions %>%
+  filter(whitemove1 %in% c("e4", "d4", "Nf3", "c4", "e3"))
+
+filtered_proportions_long <- tidyr::pivot_longer(filtered_proportions,
+                                                 cols = c(white_win_prop, black_win_prop, draw_prop),
+                                                 names_to = "outcome",
+                                                 values_to = "proportion")
+
+
+outcomeplot <- ggplot(filtered_proportions_long, aes(x = whitemove1, y = proportion, fill = outcome)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "First Move", y = "Win rate", title = "Win Percentage by Colour for First Moves") +
+  scale_fill_manual(values = c("white_win_prop" = "gray", "black_win_prop" = "black", "draw_prop" = "blue"),
+                    labels = c("Black Wins", "Draws", "White Wins")) +
+  scale_y_continuous(labels = scales::percent) +
+  scale_x_discrete(limits = c("e4", "d4", "Nf3", "c4", "e3")) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+outcomeplot
+```
+
+
+
+
+```{r Descriptives3}
+#Lets look at the differences in time controls
+#first lets look at if there is a change in winning depending on if there is added time per move
+incrementdf <- master_df %>% 
+  separate(increment_code, into = c("base", "increment"), sep = "\\+") %>% 
+    mutate(incr = ifelse(increment != 0, "no", "yes")) %>% 
+    select(winner, base, increment, incr) %>% 
+    group_by(base, incr) %>% 
+    summarize(
+    white_wins = sum(winner == "white"),
+    black_wins = sum(winner == "black"),
+    draws = sum(winner == "draw"),
+    total_games = n()
+  ) %>%
+  mutate(
+    white_win_prop = white_wins / total_games,
+    black_win_prop = black_wins / total_games,
+    draw_prop = draws / total_games
+  ) %>% 
+    ungroup() %>% 
+    filter(total_games > 200, base != 5, base != 7) %>% 
+    select(base, incr, white_win_prop, black_win_prop, draw_prop) %>% 
+    gather(Score, Value, -base, -incr)
+
+#now lets plot a facetwrapped plot to see if there are differences between increments being present or not
+
+incrplot <- ggplot(incrementdf, aes(x = base, y = Value, fill = Score)) +
+  geom_bar(stat = "identity", position = "dodge") +
+    facet_wrap(~incr, scales = "fixed", nrow = 2)+
+  labs(x = "Time Control", y = "Win rate", title = "Win Percentage by Time Control", subtitle = "Grouped by increment or not") +
+  scale_fill_manual(values = c("white_win_prop" = "gray", "black_win_prop" = "black", "draw_prop" = "blue"),
+                    labels = c("Black Wins", "Draws", "White Wins")) +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+incrplot
+```
+
+```{r Descriptive4}
+#Now lets look at the most common openings
+openings <- master_df %>% 
+    select(opening_name) %>% 
+    separate(opening_name, into = c("opening", "variation"), sep = ": ") %>% 
+    group_by(opening) %>% 
+    count(opening) %>%
+    ungroup() %>% 
+    arrange(-n) %>% 
+    top_n(10) %>% 
+    select(n, opening)
+
+#now we have the top 10 openings lets plot them
+pop_openings<- openings %>% 
+    ggplot()+
+    geom_col(aes(x=opening,y=n))+
+                 coord_flip()+
+                 theme_classic()
+pop_openings
+```
+
+```{r}
+#Now that we have the most popular openings are lets look at the proportion of winners and losers are
+winner_openings <- master_df %>% 
+  separate(opening_name, into = c("opening", "variation"), sep = ": ") %>% 
+  select(opening, winner) %>% 
+  filter(opening %in% c("Sicilian Defense", "French Defense", "Queen's Pawn Game", "Italian Game", "King's Pawn Game", "Ruy Lopez", "English Opening", "Scandinavian Defense", "Caro-Kann Defense", "Scotch Game")) %>% 
+  group_by(opening) %>% 
+  summarize(
+    white_wins = sum(winner == "white"),
+    black_wins = sum(winner == "black"),
+    draws = sum(winner == "draw"),
+    total_games = n()
+  ) %>%
+  mutate(
+    white_win_prop = white_wins / total_games,
+    black_win_prop = black_wins / total_games,
+    draw_prop = draws / total_games
+  ) %>% 
+    select(opening, white_win_prop, black_win_prop, draw_prop) %>% 
+  gather(Score, Value, -opening)
+
+opening_plot <- winner_openings %>% 
+  ggplot(aes(x = opening, y = Value, fill = Score)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Opening", y = "Win rate", title = "Win Percentage by Opening", subtitle = "Most popular 10 openings") +
+  scale_fill_manual(values = c("white_win_prop" = "gray", "black_win_prop" = "black", "draw_prop" = "blue"),
+                    labels = c("White Wins", "Black Wins", "Draws")) +
+  scale_y_continuous(labels = scales::percent) +
+  theme_minimal() +
+  theme(legend.position = "bottom", legend.title = element_blank())+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 8))
+
+opening_plot
+
+    
+
+```
+
+```{r Ratings}
+winner_rating<- master_df %>% 
+ggplot()+
+    geom_point(aes(x=white_rating,y=black_rating,color=winner), alpha=0.5)+
+      geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black")
+
+winner_rating
+```
+
+```{r}
+rating <- master_df %>% 
+    select(white_rating, black_rating) 
+ 
+median <- rating %>% 
+    summarise(white = median(white_rating), black = median(black_rating))
+
+rating_hist <-master_df %>% 
+    ggplot() +
+  geom_density(aes(x = white_rating), color = "gray") +
+     geom_density(aes(x = black_rating), color = "black") +
+     geom_vline(xintercept = 1567, color = "gray", linetype = "dashed") +
+  geom_vline(xintercept = 1562, color = "black", linetype = "dashed") +
+  labs(title = "Player Rating", x = "Rating", y = "Count") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.ticks.x = element_blank())
+
+rating_hist
+```
+
+# Methodology
+
+
+# Results
+
+```{r results='asis'}
+library(recipes)
+library(xgboost)
+master_dfull<- master_df %>% 
+    separate(increment_code, into = c("base", "increment"), sep = "\\+") %>% 
+    mutate(base = as.numeric(base), increment = as.numeric(increment))
+
+
+set.seed(555)
+split_1 <- initial_split(master_dfull, prop = 0.7)  # Split the dataset 
+train_2 <- training(split_1)  # Training set
+test_2 <- testing(split_1)  # Test set
+factor_cols <- c("opening_eco", "whitemove1", "whitemove2", "whitemove3", "whitemove4", "whitemove5", "blackmove1", "blackmove2", "blackmove3", "blackmove4", "blackmove5")
+train_2[factor_cols] <- lapply(train_2[factor_cols], as.character)
+test_2[factor_cols] <- lapply(test_2[factor_cols], as.character)
+
+# Assign unique numerical identifiers to categorical variables
+for (col in factor_cols) {
+  unique_vals <- unique(c(train_2[[col]], test_2[[col]]))
+  train_2[[col]] <- as.integer(factor(train_2[[col]], levels = unique_vals))
+  test_2[[col]] <- as.integer(factor(test_2[[col]], levels = unique_vals))
+}
+
+# Combine predictors into a single matrix
+X_train <- cbind(train_2[, c("white_rating", "black_rating", "opening_ply", "ratingdiff", "base", "increment")], train_2[factor_cols])
+X_test <- cbind(test_2[, c("white_rating", "black_rating", "opening_ply", "ratingdiff", "base", "increment")], test_2[factor_cols])
+
+# Convert labels to factor
+train_labels <- as.factor(train_2$winner)
+test_labels <- as.factor(test_2$winner)
+
+# Set the parameters for the XGBoost model
+params <- list(
+  objective = "multi:softmax",  # Multiclass classification objective
+  eval_metric = "mlogloss",  # Evaluation metric
+  num_class = 3,  # Number of classes (black, white, draw)
+  nthread = 1,  # Number of threads
+  seed = 555  # Random seed
+)
+
+# Create the DMatrix for XGBoost
+dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = as.integer(train_labels) - 1)  # Subtract 1 to make labels start from 0
+dtest <- xgb.DMatrix(data = as.matrix(X_test), label = as.integer(test_labels) - 1)
+
+# Train the XGBoost model
+xgb_model <- xgboost(
+  data = dtrain,
+  params = params,
+  nrounds = 1000,  # Number of boosting rounds (you can adjust this parameter)
+  early_stopping_rounds = 10,  # Early stopping rounds
+  verbose = 0  # Verbosity level
+)
+
+# Predict using the trained model
+predictions <- predict(xgb_model, dtest)
+
+# Convert class predictions to labels
+labels <- levels(test_labels)
+class_predictions <- labels[as.integer(predictions) + 1]  # Add 1 to revert back to original labels
+
+# Assess the model performance
+accuracy <- sum(class_predictions == test_labels) / length(test_labels)
+accuracy
+
+vip::vip(xgb_model )
+
+# Feature importance using gain
+library(Ckmeans.1d.dp)
+
+importance_gain <- xgb.importance(model = xgb_model)
+
+tab <- options(xtable.comment = FALSE)
+tab <- xtable(importance_gain, caption = "Importance of Factors")
+tab
+
+```
+
+```{r}
+
+xgboost::xgb.ggplot.importance(importance_gain)
+
+
+```
+
+```{r results='asis'}
+
+
+# Convert the predicted class labels to a factor with levels
+class_predictions <- factor(class_predictions, levels = levels(test_labels))
+
+# Create the confusion matrix
+cm <- confusionMatrix(data = class_predictions, reference = test_labels)
+
+# Print the confusion matrix
+cm_tab <- options(xtable.comment = FALSE)
+cm_tab <- xtable(cm$table)
+cm_tab
+
+
+```
+
