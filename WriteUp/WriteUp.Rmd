@@ -1,106 +1,43 @@
 ---
-# IMPORTANT: Change settings here, but DO NOT change the spacing.
-# Remove comments and add values where applicable.
-# The descriptions below should be self-explanatory
-
-title: "Data Science Methods for Economics and Finance 871 Final Project: Predicting Chess Outcomes"
-#subtitle: "This will appear as Right Header"
-
-documentclass: "elsarticle"
-
-# --------- Thesis title (Optional - set to FALSE by default).
-# You can move the details below around as you please.
-Thesis_FP: FALSE
-# Entry1: "An unbelievable study with a title spanning multiple lines."
-# Entry2: "\\textbf{Some Guy}" # textbf for bold
-# Entry3: "A thesis submitted toward the degree of Doctor of Philosophy"
-# Uni_Logo: Tex/Logo.png # Place a logo in the indicated location (from your root, e.g. defaults to ~/Tex/Logo.png) and uncomment this line. Leave uncommented for no image
-# Logo_width: 0.3 # If using a logo - use this to set width (size) of image
-# Entry4: "Under the supervision of: \\vfill Prof. Joe Smith and Dr. Frank Smith"
-# Entry5: "Stellenbosch University"
-# Entry6: April 2020
-# Entry7:
-# Entry8:
-
-# --------- Front Page
-# Comment: ----- Follow this pattern for up to 5 authors
-AddTitle: TRUE # Use FALSE when submitting to peer reviewed platform. This will remove author names.
-Author1: "Wesley Williams^[You can find my code on my Github page: https://github.com/wjwilliams/MLPROJ]"  # First Author - note the thanks message displayed as an italic footnote of first page.
-Ref1: "Stellenbosch University, South Africa" # First Author's Affiliation
-Email1: "21691126\\@sun.ac.za" # First Author's Email address
-
-# Author2: "John Smith"
-# Ref2: "Some other Institution, Cape Town, South Africa"
-# Email2: "John\\@gmail.com"
-# CommonAffiliation_12: TRUE # If Author 1 and 2 have a common affiliation. Works with _13, _23, etc.
-# 
-# Author3: "John Doe"
-# Email3: "Joe\\@gmail.com"
-# 
-# CorrespAuthor_1: TRUE  # If corresponding author is author 3, e.g., use CorrespAuthor_3: TRUE
-# 
-# # Comment out below to remove both. JEL Codes only given if keywords also given.
-# keywords: "Multivariate GARCH \\sep Kalman Filter \\sep Copula" # Use \\sep to separate
-# JELCodes: "L250 \\sep L100"
-
-# ----- Manage headers and footers:
-#BottomLFooter: $Title$
-#BottomCFooter:
-#TopLHeader: \leftmark # Adds section name at topleft. Remove comment to add it.
-BottomRFooter: "\\footnotesize Page \\thepage" # Add a '#' before this line to remove footer.
-addtoprule: TRUE
-addfootrule: TRUE               # Use if footers added. Add '#' to remove line.
-
-# --------- page margins:
-margin: 2.3 # Sides
-bottom: 2 # bottom
-top: 2.5 # Top
-HardSet_layout: TRUE # Hard-set the spacing of words in your document. This will stop LaTeX squashing text to fit on pages, e.g.
-# This is done by hard-setting the spacing dimensions. Set to FALSE if you want LaTeX to optimize this for your paper.
-
-# --------- Line numbers
-linenumbers: FALSE # Used when submitting to journal
-
-# ---------- References settings:
-# You can download cls format here: https://www.zotero.org/ - simply search for your institution. You can also edit and save cls formats here: https://editor.citationstyles.org/about/
-# Hit download, store it in Tex/ folder, and change reference below - easy.
-bibliography: Tex/ref.bib       # Do not edit: Keep this naming convention and location.
-csl: Tex/harvard-stellenbosch-university.csl # referencing format used.
-# By default, the bibliography only displays the cited references. If you want to change this, you can comment out one of the following:
-#nocite: '@*' # Add all items in bibliography, whether cited or not
-# nocite: |  # add specific references that aren't cited
-#  @grinold2000
-#  @Someoneelse2010
-
-# ---------- General:
-RemovePreprintSubmittedTo: TRUE  # Removes the 'preprint submitted to...' at bottom of titlepage
-Journal: "Journal of Finance"   # Journal that the paper will be submitting to, if RemovePreprintSubmittedTo is set to TRUE.
-toc: FALSE                       # Add a table of contents
-numbersections: TRUE             # Should sections (and thus figures and tables) be numbered?
-fontsize: 11pt                  # Set fontsize
-linestretch: 1.2                # Set distance between lines.
-link-citations: TRUE            # This creates dynamic links to the papers in reference list.
-
-### Adding additional latex packages:
-# header-includes:
-#    - \usepackage{colortbl} # Add additional packages here.
-
+title: 'Data Science Methods for Economics and Finance 871 Final Project: Predicting
+  Chess Outcomes'
+documentclass: elsarticle
+Thesis_FP: no
 output:
   pdf_document:
-    keep_tex: TRUE
+    keep_tex: yes
     template: Tex/TexDefault.txt
-    fig_width: 3.5 # Adjust default figure sizes. This can also be done in the chunks of the text.
+    fig_width: 3.5
     fig_height: 3.5
+  html_document:
+    df_print: paged
+Author1: 'Wesley Williams^[You can find my code on my Github page: https://github.com/wjwilliams/MLPROJ/tree/main/WriteUp]'
+Ref1: Stellenbosch University, South Africa
+Email1: 21691126\@sun.ac.za
+BottomRFooter: \footnotesize Page \thepage
+addtoprule: yes
+addfootrule: yes
+margin: 2.3
+bottom: 2
+top: 2.5
+HardSet_layout: yes
+linenumbers: no
+bibliography: Tex/ref.bib
+csl: "Tex/harvard-stellenbosch-university.csl"
+RemovePreprintSubmittedTo: yes
+Journal: Journal of Finance
+toc: yes
+numbersections: yes
+fontsize: 12pt
+linestretch: 1.2
+link-citations: yes
+AddTitle: yes
 abstract: |
-  Abstract to be written here. The abstract should not be too long and should provide the reader with a good understanding what you are writing about. Academic papers are not like novels where you keep the reader in suspense. To be effective in getting others to read your paper, be as open and concise about your findings here as possible. Ideally, upon reading your abstract, the reader should feel he / she must read your paper in entirety.
+  Chess is one of the most complicated games in the world. Humans on the other hand are not so complicated and we are the ones playing the game. This made me ask the question: "Is it possible to predict a game of chess based on just on data on the players before the game has started and just the openings used?" I employ an extreme gradient boosting model to answer this question and find that I can only predict the outcome with just over 60% accuracy, which is double the chances of just guessing.
 ---
-
-<!-- First: Set your default preferences for chunk options: -->
-
-<!-- If you want a chunk's code to be printed, set echo = TRUE. message = FALSE stops R printing ugly package loading details in your final paper too. I also suggest setting warning = FALSE and checking for warnings in R, else you might find ugly warnings in your paper. -->
-
+\newpage
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.width = 6, fig.height = 5, fig.pos="H", fig.pos = 'H')
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.width = 6, fig.height = 5, fig.pos="H", fig.pos = 'H', fig.align='center')
 # Note: Include = FALSE implies the code is executed, but not printed in your pdf.
 # warning and message = FALSE implies ugly messages and warnings are removed from your pdf.
 # These should be picked up when you execute the command chunks (code sections below) in your rmd, not printed in your paper!
@@ -112,6 +49,9 @@ library(caret)
 library(xtable)
 library(rsample)
 library(xgboost)
+library(DiagrammeR)
+library(Ckmeans.1d.dp)
+library(glue)
 
 ```
 
@@ -139,13 +79,20 @@ master_df <- master_df %>%
   
 ```
 # Introduction \label{Introduction}
+Chess, often considered one of the most popular games globally, has experienced a surge in popularity in recent years, partly fueled by its portrayal in popular media such as the acclaimed TV show "Queen's Gambit" and the movie "Pawn." These portrayals, although fictionalized to varying degrees, shed light on the remarkable life and achievements of renowned chess player Bobby Fischer. The story of Bobby Fischer is both inspirational and incredibly sad. During the Cold War, the United States (US) and the Soviet Union (USSR) engaged in a fierce competition to assert their global dominance. This rivalry extended beyond conventional arenas like the space race and nuclear arms race, encompassing intellectual pursuits such as chess. Chess was revered as the game of the intellectual elite, and both nations sought to establish themselves as the preeminent force in this domain, symbolizing their intellectual superiority. The USSR dominated until Fischer's victory against world champion Boris Spassky, symbolizing a small triumph for the US in the Cold War context. This illustrates that chess extends beyond a mere board game, carrying significant cultural and geopolitical implications. While the stakes are not as high in the modern era, chess is still seen as the epitome of intellect.
 
+Chess can be broken down into three stages of the game: the opening, the middlegame and the endgame. The opening represents the different strategies of getting all of your pieces into the most optimal positions on the board to both attack your opponents pieces and defend your own. This is the key part of a chess game that will be investigated in the paper. I want to determine if the outcome of a chess game can be predicted using only the information available about the game and players before the game begins and the openings employed by the players. The use of machine learning is crucial in this analysis due to the complexity of the game. I use an extreme gradient boosting model (XGBOOST) with three potential outcomes (white winning, black winning or a draw). The outcome is not binary therefore I cannot use a normal ordinary least squares as comparison and so I use the probability of guessing as the baseline. I also subset the data by ELO rating to assess whether it is easier to predict weaker or stronger players. I find that the opening is slightly more important for weaker players but the model is not as accurate as when using the entire sample. The rest of the paper is structured as follows, in section 2 I describe the data section 3 explores and visualizes the data, section 4 explains the methodology, section 5 presents the results and section 6 concludes.
 
+# Data
+The data was obtained from Kaggle and it includes over 20,000 games played on the online chess platform "lichess". The dataset includes 16 variables but there are only seven variables of interest: 1) the winner given as white, black or draw; 2) time and increment code which details the time control as the base time and the additional time per move; 3) white's ELO rating; 4) black's ELO rating; 5) moves which are all the moves in the game given in chess notation; 6) opening eco which is a code that represents the opening that was played and 7) opening ply which represents the number of moves played in the opening that corresponds to chess theory. An additional variable of rating difference was engineered from the perspective of white, which is just white's rating minus black's rating. 
 
+## Factor engineering
+Some of the variables need to be wrangled to be used in the model. All of the numerical variables are sufficient for the model but the character variables need to be engineered to be included. Firstly, I am only interested in the first five moves of the game, I therefore expand the moves variable so that I have a variable for each of the first five moves played by each player and disregard the rest. The moves are then converted from chess notation to a unique numerical factor for each piece moving to each co-ordinate on the board. Secondly, I separate the increment variable into the base time and the increment for each move and ensure both are numerical factors. Lastly, I assign a unique numerical value to each of the unique openeing codes to ensure comparability between the training as testings samples\footnote{I did attempt one-hot encoding but I had issues with the differences in lengths between the training and testing samples}. All the variables are therefore sufficiently engineered to be used in the model.
 
-# Exploratory Data Investigation
+# Exploratory Data Analysis
+In this section I attempt to explore and visualize the data to gain insights into the patterns that emerge with respect all the features and the the target. 
 
-```{r commonmoves}
+```{r commove1, fig.align='center', fig.cap="Most Common Opening Moves by Colour\\label{Figure1}", fig.ext='png', fig.height=4, fig.width= 5, warning=FALSE}
 #First lets just see the ratio of game outcomes by time controls, rating, rating difference, and type of win (timeout, checkmate and resignation)
 library(dplyr)
 whitemovepop <- master_df %>%
@@ -167,16 +114,16 @@ movepop <- bind_rows(
 # Plot the bar plot
 
 plot1 <- ggplot(movepop, aes(x = fct_inorder(move), y = n, fill = side)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Move 1", y = "Frequency", title = "10 Most Common Move 1 for White and Black") +
+  geom_bar(stat = "identity") +
+  labs(x = "Move 1", y = "Frequency", title = "10 Most Common First Move") +
   scale_fill_manual(values = c("White" = "gray", "Black" = "black")) +
   theme_minimal() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom", legend.title = element_blank())
 
 plot1
 ```
 
-```{r winsbyfirstmove}
+```{r firstmovepropwins, fig.align='center', fig.cap="Proportions of Outcomes by White First Move\\label{Figure2}", fig.ext='png', fig.height=3.5, fig.width=4, warning=FALSE}
 #Now to see the proportions of wins relative to the most popular openings
 outcome_proportions <- master_df %>%
   group_by(whitemove1) %>%
@@ -202,23 +149,23 @@ filtered_proportions_long <- tidyr::pivot_longer(filtered_proportions,
                                                  values_to = "proportion")
 
 
-outcomeplot <- ggplot(filtered_proportions_long, aes(x = whitemove1, y = proportion, fill = outcome)) +
-  geom_bar(stat = "identity", position = "dodge") +
+outcomeplot1 <- ggplot(filtered_proportions_long) +
+  geom_col(aes(x = whitemove1, y = proportion, fill = outcome), position = "stack") +
   labs(x = "First Move", y = "Win rate", title = "Win Percentage by Colour for First Moves") +
   scale_fill_manual(values = c("white_win_prop" = "gray", "black_win_prop" = "black", "draw_prop" = "blue"),
                     labels = c("Black Wins", "Draws", "White Wins")) +
   scale_y_continuous(labels = scales::percent) +
   scale_x_discrete(limits = c("e4", "d4", "Nf3", "c4", "e3")) +
   theme_minimal() +
-  theme(legend.position = "bottom")
+  theme(legend.position = "bottom", legend.title = element_blank())
 
-outcomeplot
+outcomeplot1
 ```
 
+Figure 3.1 shows the most common First move for each colour. It is no surprise that central pawn moves are the most common as controlling the center of the board is instrumental in the opening phase of a chess game. Figure 3.2 shows the outcome proportions for white's first move and it shows that if white claims the center they gain an advantage and black needs to respond. The move e3 instead allows black to claim the center and white loses its first mover advantage. This highlights that mistakes early on in the openings have consequences that last throughout the entire game.
 
 
-
-```{r Descriptives3}
+```{r Descript3wins, fig.align='center', fig.cap="Outcomes by Time Controls\\label{Figure3}", fig.ext='png', fig.height=4, fig.width=5, warning=FALSE}
 #Lets look at the differences in time controls
 #first lets look at if there is a change in winning depending on if there is added time per move
 incrementdf <- master_df %>% 
@@ -244,8 +191,8 @@ incrementdf <- master_df %>%
 
 #now lets plot a facetwrapped plot to see if there are differences between increments being present or not
 
-incrplot <- ggplot(incrementdf, aes(x = base, y = Value, fill = Score)) +
-  geom_bar(stat = "identity", position = "dodge") +
+incrplot1 <- ggplot(incrementdf, aes(x = base, y = Value, fill = Score)) +
+  geom_col(aes(x = base, y = Value, fill = Score), position = "stack") +
     facet_wrap(~incr, scales = "fixed", nrow = 2)+
   labs(x = "Time Control", y = "Win rate", title = "Win Percentage by Time Control", subtitle = "Grouped by increment or not") +
   scale_fill_manual(values = c("white_win_prop" = "gray", "black_win_prop" = "black", "draw_prop" = "blue"),
@@ -254,10 +201,10 @@ incrplot <- ggplot(incrementdf, aes(x = base, y = Value, fill = Score)) +
   theme_minimal() +
   theme(legend.position = "bottom")
 
-incrplot
+incrplot1
 ```
-
-```{r Descriptive4}
+Figure 3.3 shows the differences in outcome according to different time controls. It presents the top 5 time controls that are played with and without time increments. There are no significant differences in wins between whether a game has time increments or not. The only real difference is that a draw is more likely with larger time controls and no time increments.
+```{r Desc4commonopen, fig.align='center', fig.cap="Most Popular Openings\\label{Figure4}", fig.ext='png', fig.height=3.5, fig.width=4, warning=FALSE}
 #Now lets look at the most common openings
 openings <- master_df %>% 
     select(opening_name) %>% 
@@ -270,15 +217,16 @@ openings <- master_df %>%
     select(n, opening)
 
 #now we have the top 10 openings lets plot them
-pop_openings<- openings %>% 
+pop_openings1<- openings %>% 
     ggplot()+
     geom_col(aes(x=opening,y=n))+
                  coord_flip()+
-                 theme_classic()
-pop_openings
+                 theme_classic()+
+    labs(title= "Most Common Openings", y = "Count")
+pop_openings1
 ```
 
-```{r}
+```{r openplot1, fig.align='center', fig.cap="Outcome by Popular Openings\\label{Figure5}", fig.ext='png', fig.height=4, fig.width=5, warning=FALSE}
 #Now that we have the most popular openings are lets look at the proportion of winners and losers are
 winner_openings <- master_df %>% 
   separate(opening_name, into = c("opening", "variation"), sep = ": ") %>% 
@@ -299,33 +247,36 @@ winner_openings <- master_df %>%
     select(opening, white_win_prop, black_win_prop, draw_prop) %>% 
   gather(Score, Value, -opening)
 
-opening_plot <- winner_openings %>% 
-  ggplot(aes(x = opening, y = Value, fill = Score)) +
-  geom_bar(stat = "identity", position = "dodge") +
-  labs(x = "Opening", y = "Win rate", title = "Win Percentage by Opening", subtitle = "Most popular 10 openings") +
+opening_plot1 <- winner_openings %>% 
+  ggplot() +
+  geom_col(aes(x = opening, y = Value, fill = Score), position = "stack") +
+  labs(x = "Opening", y = "Win Proportion") +
   scale_fill_manual(values = c("white_win_prop" = "gray", "black_win_prop" = "black", "draw_prop" = "blue"),
-                    labels = c("White Wins", "Black Wins", "Draws")) +
+                    labels = c("Black Wins", "Draws", "White Wins")) +
   scale_y_continuous(labels = scales::percent) +
   theme_minimal() +
+    coord_flip()+
   theme(legend.position = "bottom", legend.title = element_blank())+
     theme(axis.text.x = element_text(angle = 90, hjust = 1, size = 8))
 
-opening_plot
+opening_plot1
 
     
 
 ```
-
-```{r Ratings}
+Figures 3.4 and 3.5 show the most played openings and the win proportions of those openings respectively. The opening names were given in the dataset with their variations (e.g. Queen's Gambit: Declined) where I only want the base opening name. I therefore separated the names and then dropped the variation. The Sicilian defense being the most popular is interesting as it is initiated by black as a response to white's first move of e4 who then may need to change their strategy in the opening. The opening is usually initiated by white and black has to adjust their strategy. The power of the Sicilian defense is show in figure 3.5 with the largest proportion of black winning out of all the common openings at 50%. The reason for this is that it partially eliminates white's first mover advantage as they have to respond in a way that may not have been their plan. These figures not only highlight the importance of the opening as one can gain a significant advantage that can carry through the game but also show that some openings favour a colour.
+```{r ratingoutcomescatter, fig.align='center', fig.cap="Outcome and Ratings\\label{Figure6}", fig.ext='png', fig.height=4, fig.width=5, warning=FALSE}
 winner_rating<- master_df %>% 
 ggplot()+
     geom_point(aes(x=white_rating,y=black_rating,color=winner), alpha=0.5)+
-      geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black")
+      geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "black")+
+    labs(title = "Outcome by Each Colour's Ratings", x = "Black Rating", y = "White Rating")
 
 winner_rating
 ```
 
-```{r}
+Figure 3.5 shows the influence of the respective players ratings on the outcome. As expected players with the higher rating will win but around the 45 degree line there are some exceptions. One would assume that there would be more white wins at the same or similar rating but at different levels this seems to change. Between 1000 and 1200 white seems to win more than black but between 1300 and 1700 it appears that black wins more than white and above 1700 it appears to be even with the majority of draws occurring above 2000. This highlights that the determinants of the outcomes of games may change at different ratings. Figure 3.6 shows the distribution of the ratings. Both colours have nearly identical distrbutions which makes sense as a player will have to play with both colours. The median of black is 1562 and the median of white is 1567. This distinction is used later to assess whether it is easier to predict lower or higher rated games. This section has provided some key insights of the variables of interest and show that they can have an influence on the outcome.
+```{r hist, fig.align='center', fig.cap="Distribution of Ratings\\label{Figure7}", fig.ext='png', fig.height=3, fig.width=4, warning=FALSE}
 rating <- master_df %>% 
     select(white_rating, black_rating) 
  
@@ -350,6 +301,7 @@ rating_hist
 
 
 # Results
+## Full Sample
 
 ```{r results='asis'}
 library(recipes)
@@ -360,95 +312,571 @@ master_dfull<- master_df %>%
 
 
 set.seed(555)
-split_1 <- initial_split(master_dfull, prop = 0.7)  # Split the dataset 
+split_1 <- initial_split(master_dfull, prop = 0.7, strata = "opening_eco")  # Split the dataset 
 train_2 <- training(split_1)  # Training set
 test_2 <- testing(split_1)  # Test set
 factor_cols <- c("opening_eco", "whitemove1", "whitemove2", "whitemove3", "whitemove4", "whitemove5", "blackmove1", "blackmove2", "blackmove3", "blackmove4", "blackmove5")
 train_2[factor_cols] <- lapply(train_2[factor_cols], as.character)
 test_2[factor_cols] <- lapply(test_2[factor_cols], as.character)
 
-# Assign unique numerical identifiers to categorical variables
+
 for (col in factor_cols) {
   unique_vals <- unique(c(train_2[[col]], test_2[[col]]))
   train_2[[col]] <- as.integer(factor(train_2[[col]], levels = unique_vals))
   test_2[[col]] <- as.integer(factor(test_2[[col]], levels = unique_vals))
 }
 
-# Combine predictors into a single matrix
+
 X_train <- cbind(train_2[, c("white_rating", "black_rating", "opening_ply", "ratingdiff", "base", "increment")], train_2[factor_cols])
 X_test <- cbind(test_2[, c("white_rating", "black_rating", "opening_ply", "ratingdiff", "base", "increment")], test_2[factor_cols])
 
-# Convert labels to factor
+
 train_labels <- as.factor(train_2$winner)
 test_labels <- as.factor(test_2$winner)
 
-# Set the parameters for the XGBoost model
+
 params <- list(
-  objective = "multi:softmax",  # Multiclass classification objective
-  eval_metric = "mlogloss",  # Evaluation metric
-  num_class = 3,  # Number of classes (black, white, draw)
-  nthread = 1,  # Number of threads
-  seed = 555  # Random seed
+  objective = "multi:softmax",  
+  eval_metric = "mlogloss",  
+  num_class = 3,  
+  nthread = 1,  
+  seed = 555  
 )
 
-# Create the DMatrix for XGBoost
-dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = as.integer(train_labels) - 1)  # Subtract 1 to make labels start from 0
+
+dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = as.integer(train_labels) - 1)  
 dtest <- xgb.DMatrix(data = as.matrix(X_test), label = as.integer(test_labels) - 1)
 
-# Train the XGBoost model
+
 xgb_model <- xgboost(
   data = dtrain,
   params = params,
-  nrounds = 1000,  # Number of boosting rounds (you can adjust this parameter)
-  early_stopping_rounds = 10,  # Early stopping rounds
-  verbose = 0  # Verbosity level
+  nrounds = 1000,  
+  early_stopping_rounds = 10,  
+  verbose = 0  
 )
 
-# Predict using the trained model
+
 predictions <- predict(xgb_model, dtest)
 
-# Convert class predictions to labels
+
+train_predictions <- predict(xgb_model, dtrain)
+labels_train <- levels(train_labels)
+class_predictions_train <- labels_train[as.integer(train_predictions) + 1]
+
+
 labels <- levels(test_labels)
-class_predictions <- labels[as.integer(predictions) + 1]  # Add 1 to revert back to original labels
+class_predictions <- labels[as.integer(predictions) + 1]  
 
-# Assess the model performance
+
 accuracy <- sum(class_predictions == test_labels) / length(test_labels)
-accuracy
+accuracy_train <- sum(class_predictions_train == train_labels) / length(train_labels)
 
-vip::vip(xgb_model )
 
-# Feature importance using gain
-library(Ckmeans.1d.dp)
+
+
+
 
 importance_gain <- xgb.importance(model = xgb_model)
 
 tab <- options(xtable.comment = FALSE)
 tab <- xtable(importance_gain, caption = "Importance of Factors")
-tab
+
 
 ```
 
-```{r}
+```{r importfull1, fig.align='center', fig.cap="Importance of Features for Untuned Model: Full Sample\\label{Figure8}", fig.ext='png', fig.height=5, fig.width=6, warning=FALSE}
 
-xgboost::xgb.ggplot.importance(importance_gain)
+import_untuned1 <-xgboost::xgb.ggplot.importance(importance_gain, "Importance of Factors: Untuned Model for Full Sample")
+import_untuned1
 
+
+```
+
+```{r results='asis'}
+# 
+# 
+# # Convert the predicted class labels to a factor with levels
+# class_predictions <- factor(class_predictions, levels = levels(test_labels))
+# 
+# # Create the confusion matrix
+# cm <- confusionMatrix(data = class_predictions, reference = test_labels)
+# cm1 <-as.data.frame(cm[["byClass"]]) %>% 
+#     select(Sensitivity, Specificity)
+# # Print the confusion matrix
+# cm_tab <- options(xtable.comment = FALSE)
+# cm_tab <- xtable(cm1)
+# cm_tab
+# 
+# 
+
+```
+
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rrrrrrrrrrr}
+  \hline
+ & eta & depth & weight & subsample & colsample& gamma & lambda & alpha & rmse & trees \\ 
+  \hline
+1 & 0.01 & 3.00 & 3.00 & 0.50 & 0.50 & 0.00 & 1.00 & 0.00 & 0.80 & 874.00 \\ 
+   \hline
+\end{tabular}
+\caption{Hypergrid Full Sample} 
+\end{table}
+
+```{r Final_fit_fullsample}
+
+params <- list(
+    eval_metric = "mlogloss",  
+  num_class = 3,  
+  nthread = 1, 
+  eta = 0.01,
+  lambda = 1,
+  max_depth = 3,
+  min_child_weight = 3,
+  subsample = 0.5,
+  colsample_bytree = 0.5
+)
+
+
+xgb.fit.final <- xgboost(
+  params = params,
+  data = dtrain,
+  nrounds = 874,
+objective = "multi:softmax",
+verbose = 0
+)
+
+
+predictions <- predict(xgb_model, dtest)
+
+
+train_predictions <- predict(xgb_model, dtrain)
+labels_train <- levels(train_labels)
+class_predictions_train <- labels_train[as.integer(train_predictions) + 1]
+
+
+labels <- levels(test_labels)
+class_predictions <- labels[as.integer(predictions) + 1]  
+
+
+accuracy <- sum(class_predictions == test_labels) / length(test_labels)
+accuracy_train <- sum(class_predictions_train == train_labels) / length(train_labels)
+accuracy <- sum(class_predictions == test_labels) / length(test_labels)
+
+```
+
+
+```{r importfullsamp2, fig.align='center', fig.cap="Importance of Features for Tuned Model: Full Sample\\label{Figure9}", fig.ext='png', fig.height=5, fig.width=6, warning=FALSE}
+importance_gain <- xgb.importance(model = xgb.fit.final)
+import_tuned1 <-xgboost::xgb.ggplot.importance(importance_gain, "Importance of Factors: Tuned Model for Full Sample")
+import_tuned1
+
+```
+
+The initial accuracy after tuning is `r round(accuracy*100)`% on the test sample and `r round(accuracy_train*100)`% for the training sample
+
+```{r results='asis'}
+
+class_predictions <- factor(class_predictions, levels = levels(test_labels))
+
+
+cmfull2 <- confusionMatrix(data = class_predictions, reference = test_labels)
+cmfull2 <-as.data.frame(cmfull2[["byClass"]]) %>% 
+    select(Sensitivity, Specificity)
+
+
+cmfull2_tab <- options(xtable.comment = FALSE)
+cmfull2_tab <- xtable(cmfull2, caption = "Accuracy Full Sample: Tuned Model") 
+cmfull2_tab
+
+
+
+
+
+```
+
+After tuning the model has an accuracy of `r round(accuracy*100)`%
+```{r treeplot, fig.align='center', fig.cap="Full Sample Model Tree\\label{Figure10}", fig.ext='png', fig.height=5, fig.width=6, warning=FALSE}
+
+
+treesplot <- xgb.plot.multi.trees(
+  feature_names = names(master_dfull),
+  features_keep = 3,
+  model = xgb.fit.final
+)
+
+
+```
+
+
+## Sub-samble by ELO
+### Bottom Half
+```{r Low}
+#Lets now get two more models for above and below the median elo using the same code as before
+master_dflow<- master_df %>% 
+    separate(increment_code, into = c("base", "increment"), sep = "\\+") %>% 
+    mutate(base = as.numeric(base), increment = as.numeric(increment)) %>% 
+    filter(white_rating < 1567, black_rating < 1562)
+
+
+set.seed(555)
+split_1 <- initial_split(master_dflow, prop = 0.7, strata = "opening_eco")  # Split the dataset 
+train_2 <- training(split_1)  # Training set
+test_2 <- testing(split_1)  # Test set
+factor_cols <- c("opening_eco", "whitemove1", "whitemove2", "whitemove3", "whitemove4", "whitemove5", "blackmove1", "blackmove2", "blackmove3", "blackmove4", "blackmove5")
+train_2[factor_cols] <- lapply(train_2[factor_cols], as.character)
+test_2[factor_cols] <- lapply(test_2[factor_cols], as.character)
+
+
+for (col in factor_cols) {
+  unique_vals <- unique(c(train_2[[col]], test_2[[col]]))
+  train_2[[col]] <- as.integer(factor(train_2[[col]], levels = unique_vals))
+  test_2[[col]] <- as.integer(factor(test_2[[col]], levels = unique_vals))
+}
+
+X_train <- cbind(train_2[, c("white_rating", "black_rating", "opening_ply", "ratingdiff", "base", "increment")], train_2[factor_cols])
+X_test <- cbind(test_2[, c("white_rating", "black_rating", "opening_ply", "ratingdiff", "base", "increment")], test_2[factor_cols])
+
+
+train_labels <- as.factor(train_2$winner)
+test_labels <- as.factor(test_2$winner)
+
+
+params <- list(
+  objective = "multi:softmax",  
+  eval_metric = "mlogloss",  
+  num_class = 3,  
+  nthread = 1,  
+  seed = 555 
+)
+
+
+dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = as.integer(train_labels) - 1)  
+
+dtest <- xgb.DMatrix(data = as.matrix(X_test), label = as.integer(test_labels) - 1)
+
+
+xgb_model <- xgboost(
+  data = dtrain,
+  params = params,
+  nrounds = 1000,  
+  early_stopping_rounds = 10, 
+  verbose = 0  
+)
+
+
+predictions <- predict(xgb_model, dtest)
+
+
+train_predictions <- predict(xgb_model, dtrain)
+labels_train <- levels(train_labels)
+class_predictions_train <- labels_train[as.integer(train_predictions) + 1]
+
+
+labels <- levels(test_labels)
+class_predictions <- labels[as.integer(predictions) + 1]  
+
+
+accuracy <- sum(class_predictions == test_labels) / length(test_labels)
+accuracy_train <- sum(class_predictions_train == train_labels) / length(train_labels)
+
+
+```
+
+
+```{r results='asis'}
+# # Convert the predicted class labels to a factor with levels
+# class_predictions <- factor(class_predictions, levels = levels(test_labels))
+# 
+# # Create the confusion matrix
+# cmlow1 <- confusionMatrix(data = class_predictions, reference = test_labels)
+# cmlow1 <-as.data.frame(cmlow1[["byClass"]]) %>% 
+#     select(Sensitivity, Specificity)
+# 
+# # Print the confusion matrix
+# cmfull2_tab <- options(xtable.comment = FALSE)
+# cmfull2_tab <- xtable(cmlow1, caption = "Accuracy Bottom Sample: Untuned Model") 
+# cmfull2_tab
+```
+
+```{r importancelow1, fig.align='center', fig.cap="Feature Importance Untuned Model: Bottom Half\\label{Figure11}", fig.ext='png', fig.height=5, fig.width=6, warning=FALSE}
+importance_gain <- xgb.importance(model = xgb_model)
+
+
+import_untuned2 <-xgboost::xgb.ggplot.importance(importance_gain, "Importance of Factors: Untuned Model for Bottom Half")
+import_untuned2
+
+
+```
+
+The initial accuracy before tuning is `r round(accuracy*100)`% on the test sample and `r round(accuracy_train*100)`% for the training sample
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rrrrrrrrrrr}
+  \hline
+ & eta & depth & weight & subsample & colsample& gamma & lambda & alpha & rmse & trees \\ 
+  \hline
+1 & 0.01 & 3.00 & 3.00 & 0.50 & 0.50 & 1.00 & 1.00 & 0.00 & 0.80 & 603.00 \\ 
+
+   \hline
+\end{tabular}
+\caption{Hypergrid Bottom Half} 
+\end{table}
+```{r LowFinal}
+
+params <- list(
+    eval_metric = "mlogloss",  
+  num_class = 3,  
+  nthread = 1, 
+  eta = 0.01,
+  lambda = 1,
+  gamma = 1,
+  max_depth = 4,
+  min_child_weight = 3,
+  subsample = 0.5,
+  colsample_bytree = 0.5
+)
+
+
+
+xgb.fit.finallow <- xgboost(
+  params = params,
+  data = dtrain,
+  nrounds = 874,
+objective = "multi:softmax",
+verbose = 0
+)
+
+
+predictions <- predict(xgb_model, dtest)
+
+
+train_predictions <- predict(xgb_model, dtrain)
+labels_train <- levels(train_labels)
+class_predictions_train <- labels_train[as.integer(train_predictions) + 1]
+
+
+labels <- levels(test_labels)
+class_predictions <- labels[as.integer(predictions) + 1]  
+
+
+accuracy <- sum(class_predictions == test_labels) / length(test_labels)
+accuracy_train <- sum(class_predictions_train == train_labels) / length(train_labels)
+
+```
+
+
+```{r importancelow2, fig.align='center', fig.cap="Feature Importance Tuned Model: Bottom Half\\label{Figure12}", fig.ext='png', fig.height=5, fig.width=6, warning=FALSE}
+importance_gain <- xgb.importance(model = xgb.fit.finallow)
+import_tuned2 <-xgboost::xgb.ggplot.importance(importance_gain, "Importance of Factors: Tuned Model for Bottom Half")
+import_tuned2
 
 ```
 
 ```{r results='asis'}
 
 
-# Convert the predicted class labels to a factor with levels
 class_predictions <- factor(class_predictions, levels = levels(test_labels))
+test_labels <- factor(test_labels, levels = levels(class_predictions))
 
-# Create the confusion matrix
-cm <- confusionMatrix(data = class_predictions, reference = test_labels)
 
-# Print the confusion matrix
-cm_tab <- options(xtable.comment = FALSE)
-cm_tab <- xtable(cm$table)
-cm_tab
+cmlow2 <- confusionMatrix(data = class_predictions, reference = test_labels)
+cmlow2 <- as.data.frame(cmlow2[["byClass"]]) %>% 
+  select(Sensitivity, Specificity)
+
+
+cmlow2_tab <- xtable(cmlow2, caption = "Accuracy Bottom Sample: Tuned Model")
+cmlow2_tab
+
+```
+
+The initial accuracy after tuning is `r round(accuracy*100)`% on the test sample and `r round(accuracy_train*100)`% for the training sample
+
+
+### Top Half
+```{r High}
+master_dfhigh<- master_df %>% 
+    separate(increment_code, into = c("base", "increment"), sep = "\\+") %>% 
+    mutate(base = as.numeric(base), increment = as.numeric(increment)) %>% 
+        filter(white_rating > 1567, black_rating > 1562)
+
+
+
+set.seed(555)
+split_1 <- initial_split(master_dfhigh, prop = 0.7, strata = "opening_eco")  # Split the dataset 
+train_2 <- training(split_1)  # Training set
+test_2 <- testing(split_1)  # Test set
+factor_cols <- c("opening_eco", "whitemove1", "whitemove2", "whitemove3", "whitemove4", "whitemove5", "blackmove1", "blackmove2", "blackmove3", "blackmove4", "blackmove5")
+train_2[factor_cols] <- lapply(train_2[factor_cols], as.character)
+test_2[factor_cols] <- lapply(test_2[factor_cols], as.character)
+
+
+for (col in factor_cols) {
+  unique_vals <- unique(c(train_2[[col]], test_2[[col]]))
+  train_2[[col]] <- as.integer(factor(train_2[[col]], levels = unique_vals))
+  test_2[[col]] <- as.integer(factor(test_2[[col]], levels = unique_vals))
+}
+
+
+X_train <- cbind(train_2[, c("white_rating", "black_rating", "opening_ply", "ratingdiff", "base", "increment")], train_2[factor_cols])
+X_test <- cbind(test_2[, c("white_rating", "black_rating", "opening_ply", "ratingdiff", "base", "increment")], test_2[factor_cols])
+
+
+train_labels <- as.factor(train_2$winner)
+test_labels <- as.factor(test_2$winner)
+
+
+params <- list(
+  objective = "multi:softmax",  
+  eval_metric = "mlogloss",  
+  num_class = 3,  
+  nthread = 1,  
+  seed = 555  
+)
+
+
+dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = as.integer(train_labels) - 1)  
+dtest <- xgb.DMatrix(data = as.matrix(X_test), label = as.integer(test_labels) - 1)
+
+
+xgb_model <- xgboost(
+  data = dtrain,
+  params = params,
+  nrounds = 1000, 
+  early_stopping_rounds = 10, 
+  verbose = 0 
+)
+
+
+predictions <- predict(xgb_model, dtest)
+
+
+train_predictions <- predict(xgb_model, dtrain)
+labels_train <- levels(train_labels)
+class_predictions_train <- labels_train[as.integer(train_predictions) + 1]
+
+
+labels <- levels(test_labels)
+class_predictions <- labels[as.integer(predictions) + 1]   
+
+
+accuracy <- sum(class_predictions == test_labels) / length(test_labels)
+accuracy_train <- sum(class_predictions_train == train_labels) / length(train_labels)
 
 
 ```
+
+```{r results='asis'}
+# class_predictions <- factor(class_predictions, levels = levels(test_labels))
+# cmhigh1 <- confusionMatrix(data = class_predictions, reference = test_labels)
+# 
+# cmhigh1 <-as.data.frame(cmhigh1[["byClass"]]) %>% 
+#     select(Sensitivity, Specificity)
+# 
+# # Print the confusion matrix
+# cmhigh1_tab <- options(xtable.comment = FALSE)
+# cmhigh1_tab <- xtable(cmhigh1, caption = "Accuracy Top Sample: UNTuned Model") 
+# cmhigh1_tab
+```
+
+```{r impoerancehigh1, fig.align='center', fig.cap="Feature Importance Untuned Model: Top Half\\label{Figure13}", fig.ext='png', fig.height=5, fig.width=6, warning=FALSE}
+
+
+importance_gain <- xgb.importance(model = xgb_model)
+
+
+import_untuned3 <-xgboost::xgb.ggplot.importance(importance_gain, "Importance of Factors: Untuned Model for Top Half")
+import_untuned3
+
+```
+
+The initial accuracy before tuning is `r round(accuracy*100)`% on the test sample and `r round(accuracy_train*100)`% for the training sample
+
+
+\begin{table}[H]
+\centering
+\begin{tabular}{rrrrrrrrrrr}
+  \hline
+ & eta & depth & weight & subsample & colsample & gamma & lambda & alpha & rmse & trees \\ 
+  \hline
+1 & 0.01 & 3.00 & 3.00 & 0.50 & 0.50 & 1.00 & 0.00 & 0.00 & 0.81 & 676.00 \\ 
+
+   \hline
+\end{tabular}
+\caption{Hypergrid Top Half} 
+\end{table}
+
+
+```{r HighFinal}
+
+params <- list(
+    eval_metric = "mlogloss",  
+  num_class = 3,  
+  nthread = 1, 
+  eta = 0.01,
+  max_depth = 3,
+  min_child_weight = 3,
+  subsample = 0.5,
+  colsample_bytree = 0.5
+)
+
+
+
+xgb.fit.finalhigh <- xgboost(
+  params = params,
+  data = dtrain,
+  nrounds = 1029,
+objective = "multi:softmax",
+verbose = 0
+)
+
+
+predictions <- predict(xgb_model, dtest)
+
+
+train_predictions <- predict(xgb_model, dtrain)
+labels_train <- levels(train_labels)
+class_predictions_train <- labels_train[as.integer(train_predictions) + 1]
+
+
+labels <- levels(test_labels)
+class_predictions <- labels[as.integer(predictions) + 1]  
+
+
+
+accuracy <- sum(class_predictions == test_labels) / length(test_labels)
+accuracy_train <- sum(class_predictions_train == train_labels) / length(train_labels)
+    
+```
+
+
+```{r importancehigh2, fig.align='center', fig.cap="Feature Importance Tuned Model: Top Half\\label{Figure14}", fig.ext='png', fig.height=5, fig.width=6, warning=FALSE}
+importance_gain <- xgb.importance(model = xgb.fit.finalhigh)
+import_tuned3 <-xgboost::xgb.ggplot.importance(importance_gain, "Importance of Factors: Tuned Model for Top Half")
+import_tuned3
+```
+
+```{r results='asis'}
+class_predictions <- factor(class_predictions, levels = levels(test_labels))
+cmhigh2 <- confusionMatrix(data = class_predictions, reference = test_labels)
+
+cmhigh2 <-as.data.frame(cmhigh2[["byClass"]]) %>% 
+    select(Sensitivity, Specificity)
+
+
+cmhigh2_tab <- options(xtable.comment = FALSE)
+cmhigh2_tab <- xtable(cmhigh2, caption = "Accuracy Top Sample: Tuned Model") 
+cmhigh2_tab
+```
+
+The initial accuracy after tuning is `r round(accuracy*100)`% on the test sample and `r round(accuracy_train*100)`% for the training sample
+
+# Conclusion
+
+
+\newpage
+# References
 

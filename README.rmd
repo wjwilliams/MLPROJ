@@ -18,6 +18,7 @@ library(rsample)
 library(caret)
 library(xgboost)
 library(rsample)
+library(Ckmeans.1d.dp)
 
 
 list.files('code/', full.names = T, recursive = T) %>% .[grepl('.R', .)] %>% as.list() %>% walk(~source(.))
@@ -43,7 +44,7 @@ master_df <- master_df %>%
   
 ```
 
-```{r Descriptives1}
+```{r Desc1}
 #First lets just see the ratio of game outcomes by time controls, rating, rating difference, and type of win (timeout, checkmate and resignation)
 library(dplyr)
 whitemovepop <- master_df %>%
@@ -74,7 +75,7 @@ plot1 <- ggplot(movepop, aes(x = fct_inorder(move), y = n, fill = side)) +
 plot1
 ```
 
-```{r Descriptives2}
+```{r Descrip2}
 #Now to see the proportions of wins relative to the most popular openings
 outcome_proportions <- master_df %>%
   group_by(whitemove1) %>%
@@ -118,7 +119,7 @@ outcomeplot
 
 
 
-```{r Descriptives3}
+```{r Descrip3}
 #Lets look at the differences in time controls
 #first lets look at if there is a change in winning depending on if there is added time per move
 incrementdf <- master_df %>% 
@@ -157,7 +158,7 @@ incrplot <- ggplot(incrementdf, aes(x = base, y = Value, fill = Score)) +
 incrplot
 ```
 
-```{r Descriptive4}
+```{r Descrip4}
 #Now lets look at the most common openings
 openings <- master_df %>% 
     select(opening_name) %>% 
@@ -527,10 +528,9 @@ class_predictions <- labels[as.integer(predictions) + 1]  # Add 1 to revert back
 accuracy <- sum(class_predictions == test_labels) / length(test_labels)
 accuracy
 
-vip::vip(xgb_model )
+vip_plot1 <- vip::vip(xgb_model )
 
 # Feature importance using gain
-library(Ckmeans.1d.dp)
 
 importance_gain <- xgb.importance(model = xgb_model)
 importance_gain
@@ -542,11 +542,11 @@ library(caret)
 # Convert the predicted class labels to a factor with levels
 class_predictions <- factor(class_predictions, levels = levels(test_labels))
 
-# Create the confusion matrix
+#confusion matrix
 cm <- confusionMatrix(data = class_predictions, reference = test_labels)
 
-# Print the confusion matrix
-print(cm)
+treesplot <- xgb.plot.multi.trees(feature_names = names(master_dfull), 
+                     model = xgb_model)
 
 
 ```
@@ -591,9 +591,9 @@ print(cm)
 hyper_grid <- expand.grid(
   eta = 0.01,
   max_depth = 3,
-  min_child_weight = 3,
+  min_child_weight =  3,
   subsample = 0.5,
-  colsample_bytree = 0.5,
+  colsample_bytree = c(0.5, 0.75, 1),
   gamma = c(0, 1, 10, 100, 1000),
   lambda = c(0, 1e-2, 0.1, 1, 100, 1000, 10000),
   alpha = c(0, 1e-2, 0.1, 1, 100, 1000, 10000),
@@ -603,7 +603,7 @@ hyper_grid <- expand.grid(
 
 # Grid search
 for (i in seq_len(nrow(hyper_grid))) {
-  set.seed(123)
+  set.seed(555)
   dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = as.integer(train_labels) - 1)
   params <- list(
     objective = "multi:softmax",
@@ -622,7 +622,7 @@ for (i in seq_len(nrow(hyper_grid))) {
   cv_result <- xgb.cv(
     data = dtrain,
     params = params,
-    nrounds = 4000,
+    nrounds = 2000,
     early_stopping_rounds = 50,
     nfold = 10,
     verbose = 0
@@ -640,44 +640,56 @@ filtered_results <- hyper_grid %>%
 # Print the filtered results
 glimpse(filtered_results)
 
+hg1 <- options(xtable.comment = FALSE)
+hg1 <- xtable(filtered_results, caption = "Hypergrid Full Sample")
+hg1
 ```
 
 ```{r finalfit}
 
 # optimal parameter list
 params <- list(
+    eval_metric = "mlogloss",  
+  num_class = 3,  
+  nthread = 1, 
   eta = 0.01,
-  max_depth = 3,
+  max_depth = 4,
   min_child_weight = 3,
   subsample = 0.5,
   colsample_bytree = 0.5
 )
+
 
 # train final model
 xgb.fit.final <- xgboost(
   params = params,
   data = dtrain,
   label = Y,
-  nrounds = 3944,
+  nrounds = 1029,
 objective = "multi:softmax",
 verbose = 0
 )
+
+# Predict using the trained model
+predictions <- predict(xgb.fit.final, dtest)
+
+# Convert class predictions to labels
+labels <- levels(test_labels)
+class_predictions <- labels[as.integer(predictions) + 1]  # Add 1 to revert back to original labels
+
+# Assess the model performance
+accuracy <- sum(class_predictions == test_labels) / length(test_labels)
+accuracy
 
 ```
 
 ```{r Importance}
 library(vip)
 
-
-
-
-
-
-vip::vip(Final_fit)
-
 #Alternate use xgb.importance
-importance <- xgb.importance(Final_fit)
-xgboost::xgb.ggplot.importance(importance)
+importance2 <- xgb.importance(model = xgb.fit.final)
+importance_plot<- xgboost::xgb.ggplot.importance(importance2)
+importance_plot
 ```
 
 ```{r}
@@ -767,6 +779,66 @@ print(cm)
 
 ```
 
+```{r grid2}
+hyper_grid <- expand.grid(
+  eta = 0.01,
+  max_depth = 3,
+  min_child_weight =  3,
+  subsample = 0.5,
+  colsample_bytree = c(0.5, 0.75, 1),
+  gamma = c(0, 1, 10, 100, 1000),
+  lambda = c(0, 1e-2, 0.1, 1, 100, 1000, 10000),
+  alpha = c(0, 1e-2, 0.1, 1, 100, 1000, 10000),
+  rmse = 0,
+  trees = 0
+)
+
+# Grid search
+for (i in seq_len(nrow(hyper_grid))) {
+  set.seed(555)
+  dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = as.integer(train_labels) - 1)
+  params <- list(
+    objective = "multi:softmax",
+    eval_metric = "mlogloss",
+    num_class = 3,
+    eta = hyper_grid$eta[i],
+    max_depth = hyper_grid$max_depth[i],
+    min_child_weight = hyper_grid$min_child_weight[i],
+    subsample = hyper_grid$subsample[i],
+    colsample_bytree = hyper_grid$colsample_bytree[i],
+    gamma = hyper_grid$gamma[i],
+    lambda = hyper_grid$lambda[i],
+    alpha = hyper_grid$alpha[i]
+  )
+  
+  cv_result <- xgb.cv(
+    data = dtrain,
+    params = params,
+    nrounds = 2000,
+    early_stopping_rounds = 50,
+    nfold = 10,
+    verbose = 0
+  )
+  
+  hyper_grid$rmse[i] <- min(cv_result$evaluation_log$test_mlogloss_mean)
+  hyper_grid$trees[i] <- cv_result$best_iteration
+}
+
+# Filter and sort the results
+filtered_results3 <- hyper_grid %>%
+  filter(rmse > 0) %>%
+  arrange(rmse) %>% 
+    head(15)
+
+# Print the filtered results
+glimpse(filtered_results3)
+
+hg2 <- options(xtable.comment = FALSE)
+hg2 <- xtable(filtered_results3, caption = "Hypergrid Bottom Half of the Sample")
+hg2
+```
+
+
 ```{r}
 master_dfhigh<- master_df %>% 
     separate(increment_code, into = c("base", "increment"), sep = "\\+") %>% 
@@ -849,8 +921,66 @@ class_predictions <- factor(class_predictions, levels = levels(test_labels))
 # Create the confusion matrix
 cm <- confusionMatrix(data = class_predictions, reference = test_labels)
 
-# Print the confusion matrix
-print(cm)
 
+
+```
+
+```{r grid3}
+hyper_grid <- expand.grid(
+  eta = 0.01,
+  max_depth = 3,
+  min_child_weight =  3,
+  subsample = 0.5,
+  colsample_bytree = c(0.5, 0.75, 1),
+  gamma = c(0, 1, 10, 100, 1000),
+  lambda = c(0, 1e-2, 0.1, 1, 100, 1000, 10000),
+  alpha = c(0, 1e-2, 0.1, 1, 100, 1000, 10000),
+  rmse = 0,
+  trees = 0
+)
+# Grid search
+for (i in seq_len(nrow(hyper_grid))) {
+  set.seed(555)
+  dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = as.integer(train_labels) - 1)
+  params <- list(
+    objective = "multi:softmax",
+    eval_metric = "mlogloss",
+    num_class = 3,
+    eta = hyper_grid$eta[i],
+    max_depth = hyper_grid$max_depth[i],
+    min_child_weight = hyper_grid$min_child_weight[i],
+    subsample = hyper_grid$subsample[i],
+    colsample_bytree = hyper_grid$colsample_bytree[i],
+    gamma = hyper_grid$gamma[i],
+    lambda = hyper_grid$lambda[i],
+    alpha = hyper_grid$alpha[i]
+  )
+  
+  cv_result <- xgb.cv(
+    data = dtrain,
+    params = params,
+    nrounds = 2000,
+    early_stopping_rounds = 50,
+    nfold = 10,
+    verbose = 0
+  )
+  
+  hyper_grid$rmse[i] <- min(cv_result$evaluation_log$test_mlogloss_mean)
+  hyper_grid$trees[i] <- cv_result$best_iteration
+}
+
+# Filter and sort the results
+filtered_results4 <- hyper_grid %>%
+  filter(rmse > 0) %>%
+  arrange(rmse) %>% 
+    head(15) %>% 
+    head(15)
+
+# Print the filtered results
+glimpse(filtered_results4)
+
+hg3 <- options(xtable.comment = FALSE)
+hg3 <- xtable(filtered_results4, caption = "Hypergrid Top Half")
+hg3
 ```
 
