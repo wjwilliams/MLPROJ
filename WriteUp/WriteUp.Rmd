@@ -11,7 +11,7 @@ output:
     fig_height: 3.5
   html_document:
     df_print: paged
-Author1: 'Wesley Williams^[You can find my code on my Github page: https://github.com/wjwilliams/MLPROJ/tree/main/WriteUp]'
+Author1: 'Wesley Williams^[Special Thanks to Ruan Geldenhuys for his help.]'
 Ref1: Stellenbosch University, South Africa
 Email1: 21691126\@sun.ac.za
 BottomRFooter: \footnotesize Page \thepage
@@ -33,11 +33,19 @@ linestretch: 1.2
 link-citations: yes
 AddTitle: yes
 abstract: |
-  Chess is one of the most complicated games in the world. Humans on the other hand are not so complicated and we are the ones playing the game. This made me ask the question: "Is it possible to predict a game of chess based on just on data on the players before the game has started and just the openings used?" I employ an extreme gradient boosting model to answer this question and find that I can only predict the outcome with just over 60% accuracy, which is double the chances of just guessing.
+ Chess is one of the most complicated games in the world. Humans on the other hand are not so complicated and we are the ones playing the game. This made me ask the question: "Is it possible to predict a game of chess based on just on data on the players before the game has started and just the openings used?" I employ an extreme gradient boosting model to answer this question and find that I can only predict the outcome with just over 60% accuracy, which is double the chances of just guessing.  You can find my code on my Github page: https://github.com/wjwilliams/MLPROJ/tree/main/WriteUp
 ---
 \newpage
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, fig.width = 6, fig.height = 5, fig.pos="H", fig.pos = 'H', fig.align='center')
+knitr::opts_chunk$set(
+	echo = FALSE,
+	fig.align = "center",
+	fig.height = 5,
+	fig.pos = "H",
+	fig.width = 6,
+	message = FALSE,
+	warning = FALSE
+)
 # Note: Include = FALSE implies the code is executed, but not printed in your pdf.
 # warning and message = FALSE implies ugly messages and warnings are removed from your pdf.
 # These should be picked up when you execute the command chunks (code sections below) in your rmd, not printed in your paper!
@@ -162,7 +170,7 @@ outcomeplot1 <- ggplot(filtered_proportions_long) +
 outcomeplot1
 ```
 
-Figure 3.1 shows the most common First move for each colour. It is no surprise that central pawn moves are the most common as controlling the center of the board is instrumental in the opening phase of a chess game. Figure 3.2 shows the outcome proportions for white's first move and it shows that if white claims the center they gain an advantage and black needs to respond. The move e3 instead allows black to claim the center and white loses its first mover advantage. This highlights that mistakes early on in the openings have consequences that last throughout the entire game.
+Figure 3.1 shows the most common first move for each colour. It is no surprise that central pawn moves are the most common as controlling the center of the board is instrumental in the opening phase of a chess game. Figure 3.2 shows the outcome proportions for white's first move and it shows that if white claims the center they gain an advantage and black needs to respond. The move e3 instead allows black to claim the center and white loses its first mover advantage. This highlights that mistakes early on in the openings have consequences that last throughout the entire game.
 
 
 ```{r Descript3wins, fig.align='center', fig.cap="Outcomes by Time Controls\\label{Figure3}", fig.ext='png', fig.height=4, fig.width=5, warning=FALSE}
@@ -298,9 +306,17 @@ rating_hist
 ```
 
 # Methodology
+I use a gradient boosting model with the winner of the game as the target and the features being both players ratings, their rating difference, the opening used, the number of moves played in the opening, the time controls and the first five moves of each player. I stratified the sampling by the opening to ensure that as many openings were included in both the training and test split. This also means that the moves were stratified as the moves correspond to the opening. Gradient boosting employs a sequence of shallow trees that learn from the previous tree and makes improvements. I used the XGBOOST package and due to the target variable not being binary and because I had more than 53 categories for the opening feature which the random forrest package in R could not handle. I used the "multi:softmax" objective function to be able to predict three types of outcomes and the evaluation metric was a multiclass log loss which evaluates the logarithm of the predicted probabilities for each class and aggregates them across all instances and is calculated as follows.
 
+\begin{equation}
+\text{{mlogloss}} = -\frac{1}{n} \sum \left[ y \cdot \log(p) + (1-y) \cdot \log(1-p) \right]
+\end{equation}
+
+The methods used follow @homl2019. I first trained and tested the model with default parameters before employing a grid search that uses cross validation to determine the optimal value of the learning rate ($\eta$), the minimum loss reduction($\gamma$), the L2 regularization term ($\lambda$) and the number of trees. I then used the results of the grid search to hyper parameter tune the model. I then used the importance of each factor and a confusion matrix to interpret and assess the model. I then subset the data using the median ratings and used same method and steps to assess if it is easier or more difficult to predict stronger or weaker players. 
 
 # Results
+This section presents the results of all six models. I present the importance of the features of the models with the default parameters to see how the importance changes after hyperparameter tuning. For the tuned models I also present the sensitivity and specificity calculated through a confusion matrix.
+
 ## Full Sample
 
 ```{r results='asis'}
@@ -374,9 +390,6 @@ accuracy_train <- sum(class_predictions_train == train_labels) / length(train_la
 
 
 
-
-
-
 importance_gain <- xgb.importance(model = xgb_model)
 
 tab <- options(xtable.comment = FALSE)
@@ -392,6 +405,8 @@ import_untuned1
 
 
 ```
+Figure 5.1 shows that, as expected, ratings features are the most important features, combined they account for `r round((importance_gain %>% select(Importance) %>%  head(3) %>% summarise(rating_total = sum(Importance)))*100)`% and are the three most important features of the model. The opening that is played is only the fifth most important factor at only `r round(importance_gain$Importance[5]*100)`%. The results also show that the moves increase in importance with both white and black's first moves being the least important features and every subsequent move becomes more important. Black's moves are also shown to be more important to the model than white's moves with black's fifth move being the fourth most important feature at `r round(importance_gain$Importance[4]*100)`% which is interesting as it means it is more important than the opening. The model has an accuracy of 100% on the training set and just 60% on the testing set so it may be over fitted. I then used hyper parameter tuning to attempt to address this issue. Table 5.1 below presents the most optimal parameters provided by the grid search. The results suggest the learning rate ($\eta$) should be reduced from 0.1 to 0.01. The parameters $\alpha$, $\gamma$ and $\lambda$ do not change and are still zero. The tree depth should be reduced from 6 to 3, which should also help solve the issue of over fitting. These parameters are used to obtain the final model and the results are presented below. 
+
 
 ```{r results='asis'}
 # 
@@ -412,14 +427,72 @@ import_untuned1
 
 ```
 
+```{r grid1}
+# hyper_grid <- expand.grid(
+#   eta = 0.01,
+#   max_depth = 3,
+#   min_child_weight =  3,
+#   subsample = 0.5,
+#   colsample_bytree = c(0.5, 0.75, 1),
+#   gamma = c(0, 1, 10, 100, 1000),
+#   lambda = c(0, 1e-2, 0.1, 1, 100, 1000, 10000),
+#   alpha = c(0, 1e-2, 0.1, 1, 100, 1000, 10000),
+#   rmse = 0,
+#   trees = 0
+# )
+# 
+# # Grid search
+# for (i in seq_len(nrow(hyper_grid))) {
+#   set.seed(555)
+#   dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = as.integer(train_labels) - 1)
+#   params <- list(
+#     objective = "multi:softmax",
+#     eval_metric = "mlogloss",
+#     num_class = 3,
+#     eta = hyper_grid$eta[i],
+#     max_depth = hyper_grid$max_depth[i],
+#     min_child_weight = hyper_grid$min_child_weight[i],
+#     subsample = hyper_grid$subsample[i],
+#     colsample_bytree = hyper_grid$colsample_bytree[i],
+#     gamma = hyper_grid$gamma[i],
+#     lambda = hyper_grid$lambda[i],
+#     alpha = hyper_grid$alpha[i]
+#   )
+#   
+#   cv_result <- xgb.cv(
+#     data = dtrain,
+#     params = params,
+#     nrounds = 2000,
+#     early_stopping_rounds = 50,
+#     nfold = 10,
+#     verbose = 0
+#   )
+#   
+#   hyper_grid$rmse[i] <- min(cv_result$evaluation_log$test_mlogloss_mean)
+#   hyper_grid$trees[i] <- cv_result$best_iteration
+# }
+# 
+# # Filter and sort the results
+# filtered_results <- hyper_grid %>%
+#   filter(rmse > 0) %>%
+#   arrange(rmse)
+# 
+# # Print the filtered results
+# glimpse(filtered_results)
+# 
+# hg1 <- options(xtable.comment = FALSE)
+# hg1 <- xtable(filtered_results, caption = "Hypergrid Full Sample")
+# hg1
+```
+
 
 \begin{table}[H]
 \centering
 \begin{tabular}{rrrrrrrrrrr}
   \hline
- & eta & depth & weight & subsample & colsample& gamma & lambda & alpha & rmse & trees \\ 
+ & $\eta$ & Depth & Weight & Subsample & Colsample& $\gamma$ & $\lambda$ & $\alpha$ & RMSE & Trees \\ 
   \hline
-1 & 0.01 & 3.00 & 3.00 & 0.50 & 0.50 & 0.00 & 1.00 & 0.00 & 0.80 & 874.00 \\ 
+1 & 0.01 & 3.00 & 3.00 & 0.50 & 0.50 & 0.00 & 0.00 & 0.00 & 0.80 & 874.00 \\ 
    \hline
 \end{tabular}
 \caption{Hypergrid Full Sample} 
@@ -432,7 +505,6 @@ params <- list(
   num_class = 3,  
   nthread = 1, 
   eta = 0.01,
-  lambda = 1,
   max_depth = 3,
   min_child_weight = 3,
   subsample = 0.5,
@@ -475,7 +547,6 @@ import_tuned1
 
 ```
 
-The initial accuracy after tuning is `r round(accuracy*100)`% on the test sample and `r round(accuracy_train*100)`% for the training sample
 
 ```{r results='asis'}
 
@@ -491,13 +562,11 @@ cmfull2_tab <- options(xtable.comment = FALSE)
 cmfull2_tab <- xtable(cmfull2, caption = "Accuracy Full Sample: Tuned Model") 
 cmfull2_tab
 
-
-
-
-
 ```
+Figure 5.2 and table 5.2 present the results of the tuned model. The tuning of parameters has improved the accuracy on the testing set to `r round(accuracy*100, digits = 2)`% but again the accuracy on the training set is still `r round(accuracy_train*100, digits = 2)`% which means that even after tuning the model still suffers from over fitting. The importance of the rating features increased to `r round((importance_gain %>% select(Importance) %>%  head(3) %>% summarise(rating_total = sum(Importance)))*100, digits = 2)`%. The lower learning rate results in better accuracy but it seems that the increased accuracy is driven by the ratings features rather than moves. The opening now becomes the most important feature after ratings which shows that it can influence the game but its importance decreases to just `r round(importance_gain$Importance[4]*100, digits = 2)`%. The time controls also become relatively more important after tuning but similarly to the opening it percentage of importance also decreases.
 
-After tuning the model has an accuracy of `r round(accuracy*100)`%
+Table 5.2 is an extract of the model's confusion matrix where sensitivity is the percentage of white wins accurately predicted and specificity is the percentage of white not winning accurately predicted. The table shows that the model predicts white the best with a sensitivity and specificity of `r round((cmfull2$Sensitivity[3]*100), digits = 2)`% and `r round((cmfull2$Specificity[3]*100), digits = 2)`% respectively. It predicts black almost as well with a sensitivity and specificity of `r round((cmfull2$Sensitivity[1]*100))`% and `r round((cmfull2$Specificity[1]*100), digits = 2)`% respectively, unlike for white the specificity is larger than the sensitivity meaning it predicts black not winning more accurately than black winning. The model struggles the most to predict a draw with a sensitivity of just `r round((cmfull2$Sensitivity[2]*100), digits = 2)`%. The accuracy is still nearly double that of just guessing which would be 33%.
+
 ```{r treeplot, fig.align='center', fig.cap="Full Sample Model Tree\\label{Figure10}", fig.ext='png', fig.height=5, fig.width=6, warning=FALSE}
 
 
@@ -512,6 +581,8 @@ treesplot <- xgb.plot.multi.trees(
 
 
 ## Sub-samble by ELO
+The sample was then subset using the medians of ratings calculated in the exploratory data analysis section. I use the same methodology as above for both subsets of the sample.
+
 ### Bottom Half
 ```{r Low}
 #Lets now get two more models for above and below the median elo using the same code as before
@@ -611,13 +682,72 @@ import_untuned2
 
 ```
 
-The initial accuracy before tuning is `r round(accuracy*100)`% on the test sample and `r round(accuracy_train*100)`% for the training sample
+Figure 5.3 shows the feature importance of the untuned model which has an accuracy of 58% which is 2% lower than the full sample. Again ratings feasures are the most important and combined contribute `r round((importance_gain %>% select(Importance) %>%  head(3) %>% summarise(rating_total = sum(Importance)))*100, digits = 2)`% to the model. The relative importance of openings is much lower than in the full sample as it is only the eighth most important factor now with both white and black's fourth and fifth moves contributing more to the model. The results of the grid search are presented below in table 5.3 and the results suggest the same parameters as for the full sample with the exception of $\lambda$ and $\gamma$ which are now both 1. The results of the hyper parameter tuned model are presented below.
+
+```{r}
+# hyper_grid <- expand.grid(
+#   eta = 0.01,
+#   max_depth = 3,
+#   min_child_weight =  3,
+#   subsample = 0.5,
+#   colsample_bytree = c(0.5, 0.75, 1),
+#   gamma = c(0, 1, 10, 100, 1000),
+#   lambda = c(0, 1e-2, 0.1, 1, 100, 1000, 10000),
+#   alpha = c(0, 1e-2, 0.1, 1, 100, 1000, 10000),
+#   rmse = 0,
+#   trees = 0
+# )
+# 
+# # Grid search
+# for (i in seq_len(nrow(hyper_grid))) {
+#   set.seed(555)
+#   dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = as.integer(train_labels) - 1)
+#   params <- list(
+#     objective = "multi:softmax",
+#     eval_metric = "mlogloss",
+#     num_class = 3,
+#     eta = hyper_grid$eta[i],
+#     max_depth = hyper_grid$max_depth[i],
+#     min_child_weight = hyper_grid$min_child_weight[i],
+#     subsample = hyper_grid$subsample[i],
+#     colsample_bytree = hyper_grid$colsample_bytree[i],
+#     gamma = hyper_grid$gamma[i],
+#     lambda = hyper_grid$lambda[i],
+#     alpha = hyper_grid$alpha[i]
+#   )
+#   
+#   cv_result <- xgb.cv(
+#     data = dtrain,
+#     params = params,
+#     nrounds = 2000,
+#     early_stopping_rounds = 50,
+#     nfold = 10,
+#     verbose = 0
+#   )
+#   
+#   hyper_grid$rmse[i] <- min(cv_result$evaluation_log$test_mlogloss_mean)
+#   hyper_grid$trees[i] <- cv_result$best_iteration
+# }
+# 
+# # Filter and sort the results
+# filtered_results3 <- hyper_grid %>%
+#   filter(rmse > 0) %>%
+#   arrange(rmse) %>% 
+#     head(15)
+# 
+# # Print the filtered results
+# glimpse(filtered_results3)
+# 
+# hg2 <- options(xtable.comment = FALSE)
+# hg2 <- xtable(filtered_results3, caption = "Hypergrid Bottom Half of the Sample")
+# hg2
+```
 
 \begin{table}[H]
 \centering
 \begin{tabular}{rrrrrrrrrrr}
   \hline
- & eta & depth & weight & subsample & colsample& gamma & lambda & alpha & rmse & trees \\ 
+ & $\eta$ & Depth & Weight & Subsample & Colsample& $\gamma$ & $\lambda$ & $\alpha$ & RMSE & Trees \\  
   \hline
 1 & 0.01 & 3.00 & 3.00 & 0.50 & 0.50 & 1.00 & 1.00 & 0.00 & 0.80 & 603.00 \\ 
 
@@ -693,7 +823,12 @@ cmlow2_tab
 
 ```
 
-The initial accuracy after tuning is `r round(accuracy*100)`% on the test sample and `r round(accuracy_train*100)`% for the training sample
+
+The tuned model still performs worse than the full sample even after tuning with an accuracy of only `r round(accuracy*100, digits = 2)`%. This makes sense as weaker players will not stick to rigid openings as they do not know much chess theory. This makes them more unpredictable and therefore it is expected that the model performs worse. The model still seems to be over fitted as the accuracy on the training set is still `r round(accuracy_train*100, digits = 2)`%. 
+
+Figure 5.4 presents the importance of features in the tuned model. The decrease in the learning rate parameter does not increase the importance of the ratings features as much as the tuned model for the full sample as it only increases to `r round((importance_gain %>% select(Importance) %>%  head(3) %>% summarise(rating_total = sum(Importance)))*100, digits = 2)`%. The type of opening used now increases in both relative and absolute importance. It is now the fourth most important feature and its importance increased to `r round(importance_gain$Importance[4]*100, digits = 2)`% from 6%. The decrease in the learning rate helped to identify that even for weaker players the opening used is the most important feature after rating features.
+
+Table 5.4 breaks down the models accuracy and again it best predicts white, then black and still struggles with predicting a draw. All values of sensitivity and specificity have decreased compared to the full sample so it can be concluded isolating the weaker players does not improve the models accuracy.
 
 
 ### Top Half
@@ -793,14 +928,72 @@ import_untuned3
 
 ```
 
-The initial accuracy before tuning is `r round(accuracy*100)`% on the test sample and `r round(accuracy_train*100)`% for the training sample
+Figure 5.3 shows the feature importance of the untuned model which has an accuracy of `r round(accuracy*100, digits = 2)`% which is 2% lower than the full sample. This is interesting as I would have expected the stronger players to be easier to predict as they play more rigid chess and follow chess principles more stringently. Again ratings features are the most important and combined contribute `r round((importance_gain %>% select(Importance) %>%  head(3) %>% summarise(rating_total = sum(Importance)))*100, digits = 2)`% to the model. The importance of the opening for the stronger players is apparent already as it is the fourth most important factor at `r round(importance_gain$Importance[4]*100, digits = 2)`%. The ordering of the importance of the rest of the does not change compared to both other samples. Table 5.5 shows the results of the grid search and the parameter values are the same as for the bottom sample with the exception of $\lambda$ which is 0, similar to the full sample. The parameters from the grid search are then used to hyper parameter tune the model and the results are presented below.
 
+```{r gridsearch3}
+# hyper_grid <- expand.grid(
+#   eta = 0.01,
+#   max_depth = 3,
+#   min_child_weight =  3,
+#   subsample = 0.5,
+#   colsample_bytree = c(0.5, 0.75, 1),
+#   gamma = c(0, 1, 10, 100, 1000),
+#   lambda = c(0, 1e-2, 0.1, 1, 100, 1000, 10000),
+#   alpha = c(0, 1e-2, 0.1, 1, 100, 1000, 10000),
+#   rmse = 0,
+#   trees = 0
+# )
+# # Grid search
+# for (i in seq_len(nrow(hyper_grid))) {
+#   set.seed(555)
+#   dtrain <- xgb.DMatrix(data = as.matrix(X_train), label = as.integer(train_labels) - 1)
+#   params <- list(
+#     objective = "multi:softmax",
+#     eval_metric = "mlogloss",
+#     num_class = 3,
+#     eta = hyper_grid$eta[i],
+#     max_depth = hyper_grid$max_depth[i],
+#     min_child_weight = hyper_grid$min_child_weight[i],
+#     subsample = hyper_grid$subsample[i],
+#     colsample_bytree = hyper_grid$colsample_bytree[i],
+#     gamma = hyper_grid$gamma[i],
+#     lambda = hyper_grid$lambda[i],
+#     alpha = hyper_grid$alpha[i]
+#   )
+#   
+#   cv_result <- xgb.cv(
+#     data = dtrain,
+#     params = params,
+#     nrounds = 2000,
+#     early_stopping_rounds = 50,
+#     nfold = 10,
+#     verbose = 0
+#   )
+#   
+#   hyper_grid$rmse[i] <- min(cv_result$evaluation_log$test_mlogloss_mean)
+#   hyper_grid$trees[i] <- cv_result$best_iteration
+# }
+# 
+# # Filter and sort the results
+# filtered_results4 <- hyper_grid %>%
+#   filter(rmse > 0) %>%
+#   arrange(rmse) %>% 
+#     head(15) %>% 
+#     head(15)
+# 
+# # Print the filtered results
+# glimpse(filtered_results4)
+# 
+# hg3 <- options(xtable.comment = FALSE)
+# hg3 <- xtable(filtered_results4, caption = "Hypergrid Top Half")
+# hg3
+```
 
 \begin{table}[H]
 \centering
 \begin{tabular}{rrrrrrrrrrr}
   \hline
- & eta & depth & weight & subsample & colsample & gamma & lambda & alpha & rmse & trees \\ 
+ & $\eta$ & Depth & Weight & Subsample & Colsample& $\gamma$ & $\lambda$ & $\alpha$ & RMSE & Trees \\ 
   \hline
 1 & 0.01 & 3.00 & 3.00 & 0.50 & 0.50 & 1.00 & 0.00 & 0.00 & 0.81 & 676.00 \\ 
 
@@ -818,6 +1011,7 @@ params <- list(
   nthread = 1, 
   eta = 0.01,
   max_depth = 3,
+  gamma = 1,
   min_child_weight = 3,
   subsample = 0.5,
   colsample_bytree = 0.5
@@ -828,7 +1022,7 @@ params <- list(
 xgb.fit.finalhigh <- xgboost(
   params = params,
   data = dtrain,
-  nrounds = 1029,
+  nrounds = 676,
 objective = "multi:softmax",
 verbose = 0
 )
@@ -872,10 +1066,14 @@ cmhigh2_tab <- xtable(cmhigh2, caption = "Accuracy Top Sample: Tuned Model")
 cmhigh2_tab
 ```
 
-The initial accuracy after tuning is `r round(accuracy*100)`% on the test sample and `r round(accuracy_train*100)`% for the training sample
+The hyper parameter tuning does not increase the overall accuracy by much and it is still `r round(accuracy*100, digits = 2)`% on the test set and `r round(accuracy_train*100, digits = 2)`% for the training set. This is puzzling as not only is there no improvement, it also worse than for the bottom half sample. Over fitting is still an issue, the hyper parameter tuning does not seem to solve. Figure 5.6 shows the importance of the features and the importance of the ratings features increased to `r round((importance_gain %>% select(Importance) %>%  head(3) %>% summarise(rating_total = sum(Importance)))*100, digits = 2)`% which is much larger than for the bottom sample. Simalarly the importance of the opening for stronger players is only `r round(importance_gain$Importance[4]*100, digits = 2)`%. 
+
+Table 5.6 presents the results from the confusion matrix. It shows that the model predicts black winning and losing more accurately than for the weaker players but predicts white winning and losing less accurately than for the weaker players. Its accuracy and predicting the game to be a draw also decreases. While my assumption going in was that it would be easier to predict the outcome for stronger players was incorrect it highlights how complex the game of chess is and that stronger players seem to rely less on the openings than weaker players.
 
 # Conclusion
+Chess is a complicated game and trying to predict the outcome based just on the opening does not work. My results suffer from over fitting which is a large limitation of the investigation. The results show that the type of opening used is a determinant of the outcome but is minuscule compared to the ratings features. The importance of the opening also seems to decrease for players that are stronger, indicating that they rely less on specific opening strategies and may adapt their gameplay based on the opponent's moves and overall game dynamics. Subsetting the data based on player ratings, either by considering the bottom or top half, resulted in models that were less accurate compared to the analysis on the full sample. This suggests that having a diverse range of player ratings in the dataset improves the model's accuracy, likely due to the increased variability and complexity introduced by players of different skill levels.
 
+In conclusion, while the opening moves do play a role in determining the outcome of a chess game, they are overshadowed by the ratings features of the players. To build a more accurate prediction model, it is important to consider a wide range of player ratings and incorporate other relevant features beyond just the opening moves. Chess remains a challenging game to predict, highlighting the intricate nature of the game and the need for comprehensive models that encompass various aspects of player skill and strategy.
 
 \newpage
 # References
